@@ -1,0 +1,45 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: draw1 - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\AZHIDE~1\LOCALS~1\Temp\RSPE.tmp" with contents
+[
+/nologo /MLd /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_WINDOWS" /D "_MBCS" /FR"Debug/" /Fp"Debug/draw1.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"c:\mutex\dev\jemmo\main.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\AZHIDE~1\LOCALS~1\Temp\RSPE.tmp" 
+Creating temporary file "C:\DOCUME~1\AZHIDE~1\LOCALS~1\Temp\RSPF.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib jpeglib/Release/jpeglib.lib /nologo /subsystem:windows /incremental:yes /pdb:"Debug/draw1.pdb" /debug /machine:I386 /out:"Debug/draw1.exe" /pdbtype:sept 
+.\Debug\main.obj
+]
+Creating command line "link.exe @C:\DOCUME~1\AZHIDE~1\LOCALS~1\Temp\RSPF.tmp"
+<h3>Output Window</h3>
+Compiling...
+main.c
+c:\mutex\dev\jemmo\main.c(27) : error C2061: syntax error : identifier 'jmp_buf'
+c:\mutex\dev\jemmo\main.c(28) : error C2059: syntax error : '}'
+c:\mutex\dev\jemmo\main.c(134) : error C2079: 'jerr' uses undefined struct 'my_error_mgr'
+c:\mutex\dev\jemmo\main.c(147) : error C2065: 'fileName' : undeclared identifier
+c:\mutex\dev\jemmo\main.c(148) : warning C4013: 'AfxMessageBox' undefined; assuming extern returning int
+c:\mutex\dev\jemmo\main.c(152) : error C2224: left of '.pub' must have struct/union type
+c:\mutex\dev\jemmo\main.c(152) : error C2198: 'jpeg_std_error' : too few actual parameters
+c:\mutex\dev\jemmo\main.c(153) : error C2224: left of '.pub' must have struct/union type
+c:\mutex\dev\jemmo\main.c(153) : error C2065: 'my_error_exit' : undeclared identifier
+c:\mutex\dev\jemmo\main.c(156) : warning C4013: 'setjmp' undefined; assuming extern returning int
+c:\mutex\dev\jemmo\main.c(156) : error C2224: left of '.setjmp_buffer' must have struct/union type
+c:\mutex\dev\jemmo\main.c(194) : warning C4013: 'j_putRGBScanline' undefined; assuming extern returning int
+c:\mutex\dev\jemmo\main.c(201) : warning C4013: 'j_putGrayScanlineToRGB' undefined; assuming extern returning int
+Error executing cl.exe.
+
+
+
+<h3>Results</h3>
+draw1.exe - 9 error(s), 4 warning(s)
+</pre>
+</body>
+</html>

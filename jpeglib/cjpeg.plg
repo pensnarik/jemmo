@@ -1,0 +1,53 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: cjpeg - Win32--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\AZHIDE~1\LOCALS~1\Temp\RSPF7.tmp" with contents
+[
+/nologo /G6 /MT /W3 /GX /Ox /Oa /Ob2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /Fp".\cjpeg\Release/cjpeg.pch" /YX /Fo".\cjpeg\Release/" /Fd".\cjpeg\Release/" /FD /c 
+"c:\Program Files\Microsoft Visual Studio\MyProjects\jpeg7\cdjpeg.c"
+"c:\Program Files\Microsoft Visual Studio\MyProjects\jpeg7\cjpeg.c"
+"c:\Program Files\Microsoft Visual Studio\MyProjects\jpeg7\rdbmp.c"
+"c:\Program Files\Microsoft Visual Studio\MyProjects\jpeg7\rdgif.c"
+"c:\Program Files\Microsoft Visual Studio\MyProjects\jpeg7\rdppm.c"
+"c:\Program Files\Microsoft Visual Studio\MyProjects\jpeg7\rdrle.c"
+"c:\Program Files\Microsoft Visual Studio\MyProjects\jpeg7\rdswitch.c"
+"c:\Program Files\Microsoft Visual Studio\MyProjects\jpeg7\rdtarga.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\AZHIDE~1\LOCALS~1\Temp\RSPF7.tmp" 
+Creating temporary file "C:\DOCUME~1\AZHIDE~1\LOCALS~1\Temp\RSPF8.tmp" with contents
+[
+Release\jpeg.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /nologo /subsystem:console /incremental:no /pdb:".\cjpeg\Release/cjpeg.pdb" /machine:I386 /out:".\cjpeg\Release/cjpeg.exe" 
+".\cjpeg\Release\cdjpeg.obj"
+".\cjpeg\Release\cjpeg.obj"
+".\cjpeg\Release\rdbmp.obj"
+".\cjpeg\Release\rdgif.obj"
+".\cjpeg\Release\rdppm.obj"
+".\cjpeg\Release\rdrle.obj"
+".\cjpeg\Release\rdswitch.obj"
+".\cjpeg\Release\rdtarga.obj"
+]
+Creating command line "link.exe @C:\DOCUME~1\AZHIDE~1\LOCALS~1\Temp\RSPF8.tmp"
+<h3>Output Window</h3>
+Compiling...
+cdjpeg.c
+cjpeg.c
+rdbmp.c
+rdgif.c
+rdppm.c
+rdrle.c
+rdswitch.c
+rdtarga.c
+Linking...
+
+
+
+<h3>Results</h3>
+cjpeg.exe - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>
