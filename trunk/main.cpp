@@ -18,20 +18,39 @@
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <setjmp.h>
+#include <math.h>
+
 #include "jpeglib/jpeglib.h"
 
 #define WIDTHBYTES(bits)    (((bits) + 31) / 32 * 4)
 
 BOOL RegClass(WNDPROC, LPCSTR, UINT);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-unsigned char *read_jpeg(const char *filename, int *width, int *height);
+unsigned char *read_jpeg(const char *filename, unsigned int *width, unsigned int *height);
 void DrawImage();
 unsigned char *MakeDwordAlignedBuf(unsigned char *dataBuf,
 								   unsigned int widthPix,				// pixels!!
 								   unsigned int height,
 								   unsigned int *uiOutWidthBytes);		// bytes!!!
+METHODDEF(void) my_error_exit (j_common_ptr cinfo);
+
+void j_putGrayScanlineToRGB(BYTE *jpegline, 
+							 int widthPix,
+							 BYTE *outBuf,
+							 int row);
+void j_putRGBScanline(BYTE *jpegline, 
+					 int widthPix,
+					 BYTE *outBuf,
+					 int row);
+BOOL VertFlipBuf(BYTE  * inbuf, 
+					   UINT widthBytes, 
+					   UINT height);
+BOOL BGRFromRGB(BYTE *buf, UINT widthPix, UINT height);
 
 int TestJPEG();
+
+void ErrorMessage(char *msg);
 
 HINSTANCE hInst;
 char szClassName[] = "WindowAppClass";
@@ -124,52 +143,140 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 			MessageBox(NULL, "Hello", "Caption", MB_ICONINFORMATION);
 			TestJPEG();
 		}
+//	case WM_PAINT:
+//		{
+//			if (image_data != NULL)
+//				DrawImage();
+//		}
+//	case WM_SIZE:
+//		{
+//			if (image_data != NULL)
+//				DrawImage();
+//		}
+
 	}
+
 	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 int TestJPEG()
 {
-	int x, y; char msg[100];
+	unsigned int x, y; char msg[100];
 
-	image_data = read_jpeg("./testimg.jpg", &x, &y);
+	image_data = read_jpeg("./testimg2.jpg", &x, &y);
 	wsprintf(msg, "Image size: %d x %d", x, y);
 	m_width = x; m_height = y;
 	MessageBox(NULL, msg, "OK!", MB_ICONINFORMATION);
+	BGRFromRGB(image_data, x, y);
+	VertFlipBuf(image_data, x*3, y);
 	DrawImage();
 	return 0;
 }
+
+void ErrorMessage(char *msg)
+{
+	MessageBox(NULL, msg, "Error", MB_ICONERROR);
+}
+
+BOOL BGRFromRGB(BYTE *buf, UINT widthPix, UINT height)
+{
+	if (buf==NULL)
+		return FALSE;
+
+	UINT col, row;
+	for (row=0;row<height;row++) {
+		for (col=0;col<widthPix;col++) {
+			LPBYTE pRed, pGrn, pBlu;
+			pRed = buf + row * widthPix * 3 + col * 3;
+			pGrn = buf + row * widthPix * 3 + col * 3 + 1;
+			pBlu = buf + row * widthPix * 3 + col * 3 + 2;
+
+			// swap red and blue
+			BYTE tmp;
+			tmp = *pRed;
+			*pRed = *pBlu;
+			*pBlu = tmp;
+		}
+	}
+	return TRUE;
+}
+
+BOOL VertFlipBuf(BYTE  * inbuf, 
+					   UINT widthBytes, 
+					   UINT height)
+{   
+	BYTE  *tb1;
+	BYTE  *tb2;
+
+	if (inbuf==NULL)
+		return FALSE;
+
+	UINT bufsize;
+
+	bufsize=widthBytes;
+
+	tb1= (BYTE *)new BYTE[bufsize];
+	if (tb1==NULL) {
+		return FALSE;
+	}
+
+	tb2= (BYTE *)new BYTE [bufsize];
+	if (tb2==NULL) {
+		delete [] tb1;
+		return FALSE;
+	}
+	
+	UINT row_cnt;     
+	ULONG off1=0;
+	ULONG off2=0;
+
+	for (row_cnt=0;row_cnt<(height+1)/2;row_cnt++) {
+		off1=row_cnt*bufsize;
+		off2=((height-1)-row_cnt)*bufsize;   
+		
+		memcpy(tb1,inbuf+off1,bufsize);
+		memcpy(tb2,inbuf+off2,bufsize);	
+		memcpy(inbuf+off1,tb2,bufsize);
+		memcpy(inbuf+off2,tb1,bufsize);
+	}	
+
+	delete [] tb1;
+	delete [] tb2;
+
+	return TRUE;
+}        
+
 
 /*
 	read_jpeg
 */
 
 unsigned char *
-read_jpeg(const char *filename, int *width, int *height)
+read_jpeg(const char *filename, unsigned int *width, unsigned int *height)
 {
 	struct jpeg_decompress_struct cinfo;
 	struct my_error_mgr jerr;
 
 	unsigned char *dataBuf;
-//	*width=0;
-//	*height=0;
 
 	FILE * infile = NULL;		/* source file */
 
 	JSAMPARRAY buffer;		/* Output row buffer */
 	int row_stride;		/* physical row width in output buffer */
 	char buf[250];
+	*width=0;
+	*height=0;
 
 	if ((infile = fopen(filename, "rb")) == NULL) {
-		sprintf(buf, "JPEG :\nCan't open %s\n", fileName);
-		AfxMessageBox(buf);
+		sprintf(buf, "JPEG :\nCan't open %s\n", filename);
+		MessageBox(NULL, buf, "msg", MB_ICONERROR);
 		return NULL;
 	}
 
 	cinfo.err = jpeg_std_error(&jerr.pub);
 	jerr.pub.error_exit = my_error_exit;
-
-
+	
+	int a = 0;
 	if (setjmp(jerr.setjmp_buffer)) {
 		jpeg_destroy_decompress(&cinfo);
 
@@ -182,12 +289,15 @@ read_jpeg(const char *filename, int *width, int *height)
 	jpeg_stdio_src(&cinfo, infile);
 
 	(void) jpeg_read_header(&cinfo, TRUE);
+	cinfo.scale_num = 1;
+	cinfo.scale_denom =2;
+	
 	(void) jpeg_start_decompress(&cinfo);
 
 	dataBuf=(unsigned char *) malloc(cinfo.output_width * 3 * cinfo.output_height);
 	if (dataBuf==NULL) {
 
-		AfxMessageBox("JpegFile :\nOut of memory",MB_ICONSTOP);
+		MessageBox(NULL, "Out of memory", "msg", MB_ICONERROR);
 
 		jpeg_destroy_decompress(&cinfo);
 		
@@ -233,6 +343,59 @@ read_jpeg(const char *filename, int *width, int *height)
 }
  
 
+void j_putGrayScanlineToRGB(BYTE *jpegline, 
+							 int widthPix,
+							 BYTE *outBuf,
+							 int row)
+{
+	int offset = row * widthPix * 3;
+	int count;
+	for (count=0;count<widthPix;count++) {
+
+		BYTE iGray;
+
+		// get our grayscale value
+		iGray = *(jpegline + count);
+
+		*(outBuf + offset + count * 3 + 0) = iGray;
+		*(outBuf + offset + count * 3 + 1) = iGray;
+		*(outBuf + offset + count * 3 + 2) = iGray;
+	}
+}
+
+void j_putRGBScanline(BYTE *jpegline, 
+					 int widthPix,
+					 BYTE *outBuf,
+					 int row)
+{
+	int offset = row * widthPix * 3;
+	int count;
+	for (count=0;count<widthPix;count++) 
+	{
+		*(outBuf + offset + count * 3 + 0) = *(jpegline + count * 3 + 0);
+		*(outBuf + offset + count * 3 + 1) = *(jpegline + count * 3 + 1);
+		*(outBuf + offset + count * 3 + 2) = *(jpegline + count * 3 + 2);
+	}
+}
+
+METHODDEF(void) my_error_exit (j_common_ptr cinfo)
+{
+	/* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
+	my_error_ptr myerr = (my_error_ptr) cinfo->err;
+
+	char buffer[JMSG_LENGTH_MAX];
+
+	/* Create the message */
+	(*cinfo->err->format_message) (cinfo, buffer);
+
+	/* Always display the message. */
+	MessageBox(NULL,buffer,"JPEG Fatal Error",MB_ICONSTOP);
+
+
+	/* Return control to the setjmp point */
+	longjmp(myerr->setjmp_buffer, 1);
+}
+
 /*
 	DrawImage
 */
@@ -244,37 +407,42 @@ void DrawImage()
 	unsigned int left; unsigned int top;
 	char msg[255];
 
-	if (image_data == NULL) return;
-	hDc = GetDC(hwnd);
-	if (hDc != NULL) {
-		RECT rect;
-		GetClientRect(hwnd, &rect);
+	if (image_data == NULL) {
+		MessageBox(NULL, "image_data is null", "Error", MB_ICONERROR);
+	} else {
+		hDc = GetDC(hwnd);
+		if (hDc != NULL) {
+			RECT rect;
+			GetClientRect(hwnd, &rect);
 
-		left = (rect.right - rect.left - m_width) / 2;
-		top  = (rect.top - rect.bottom - m_height) / 2;
+			left = (rect.right - rect.left - m_width) / 2;
+			top  = (rect.top - rect.bottom - m_height) / 2;
 
-		tmp = MakeDwordAlignedBuf(image_data, 200, 200, &m_widthDW);
+			tmp = MakeDwordAlignedBuf(image_data, m_width, m_height, &m_widthDW);
 
-		bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-		bmiHeader.biWidth = 100;
-		bmiHeader.biHeight = 100;
-		bmiHeader.biPlanes = 1;
-		bmiHeader.biBitCount = 24;
-		bmiHeader.biCompression = BI_RGB;
-		bmiHeader.biSizeImage = 0;
-		bmiHeader.biXPelsPerMeter = 0;
-		bmiHeader.biYPelsPerMeter = 0;
-		bmiHeader.biClrUsed = 0;
-		bmiHeader.biClrImportant = 0;
-		
-		wsprintf(msg, "left: %d, top: %d", m_width, m_height);
-		MessageBox(NULL, msg, "Info", MB_ICONINFORMATION);
+			bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+			bmiHeader.biWidth = m_width;
+			bmiHeader.biHeight = m_height;
+			bmiHeader.biPlanes = 1;
+			bmiHeader.biBitCount = 24;
+			bmiHeader.biCompression = BI_RGB;
+			bmiHeader.biSizeImage = 0;
+			bmiHeader.biXPelsPerMeter = 0;
+			bmiHeader.biYPelsPerMeter = 0;
+			bmiHeader.biClrUsed = 0;
+			bmiHeader.biClrImportant = 0;
+			
+			wsprintf(msg, "Width: %d, Height: %d", m_width, m_height);
+			MessageBox(NULL, msg, "Info", MB_ICONINFORMATION);
 
-		StretchDIBits(hDc, 0, 0, 200, 200, 0, 0, 200, 200, tmp, (LPBITMAPINFO)&bmiHeader,
-			DIB_RGB_COLORS, SRCCOPY);
+			StretchDIBits(hDc, 0, 0, m_width, m_height, 0, 0, m_width, m_height, tmp, (LPBITMAPINFO)&bmiHeader,
+				DIB_RGB_COLORS, SRCCOPY);
 
-		ReleaseDC(hwnd, hDc);
-	}
+			ReleaseDC(hwnd, hDc);
+		} else {
+			ErrorMessage("hDC is null");
+		}
+	} // if
 }
  
 
