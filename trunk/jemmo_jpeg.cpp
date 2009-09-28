@@ -15,11 +15,11 @@
     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "jemmo_jpeg.h"
+
 /*
 	read_jpeg
 */
-
-#include "jemmo_jpeg.h"
 
 unsigned char *
 read_jpeg(const char *filename, unsigned int *width, unsigned int *height)
@@ -113,10 +113,7 @@ read_jpeg(const char *filename, unsigned int *width, unsigned int *height)
 }
  
 
-void j_putGrayScanlineToRGB(BYTE *jpegline, 
-							 int widthPix,
-							 BYTE *outBuf,
-							 int row)
+void j_putGrayScanlineToRGB(BYTE *jpegline, int widthPix, BYTE *outBuf, int row)
 {
 	int offset = row * widthPix * 3;
 	int count;
@@ -133,10 +130,7 @@ void j_putGrayScanlineToRGB(BYTE *jpegline,
 	}
 }
 
-void j_putRGBScanline(BYTE *jpegline, 
-					 int widthPix,
-					 BYTE *outBuf,
-					 int row)
+void j_putRGBScanline(BYTE *jpegline, int widthPix, BYTE *outBuf, int row)
 {
 	int offset = row * widthPix * 3;
 	int count;
@@ -171,9 +165,7 @@ BOOL BGRFromRGB(BYTE *buf, UINT widthPix, UINT height)
 	return TRUE;
 }
 
-BOOL VertFlipBuf(BYTE  * inbuf, 
-					   UINT widthBytes, 
-					   UINT height)
+BOOL VertFlipBuf(BYTE * inbuf, UINT widthBytes, UINT height)
 {   
 	BYTE  *tb1;
 	BYTE  *tb2;
@@ -218,29 +210,21 @@ BOOL VertFlipBuf(BYTE  * inbuf,
 
 METHODDEF(void) my_error_exit (j_common_ptr cinfo)
 {
-	/* cinfo->err really points to a my_error_mgr struct, so coerce pointer */
 	my_error_ptr myerr = (my_error_ptr) cinfo->err;
-
 	char buffer[JMSG_LENGTH_MAX];
 
-	/* Create the message */
 	(*cinfo->err->format_message) (cinfo, buffer);
-
-	/* Always display the message. */
-	MessageBox(NULL,buffer,"JPEG Fatal Error",MB_ICONSTOP);
-
-
-	/* Return control to the setjmp point */
+	MessageBox(NULL,buffer, "JPEG Fatal Error", MB_ICONSTOP);
 	longjmp(myerr->setjmp_buffer, 1);
 }
 
-unsigned char *MakeDwordAlignedBuf(unsigned char *dataBuf,
-								   unsigned int widthPix,				// pixels!!
-								   unsigned int height,
-								   unsigned int *uiOutWidthBytes)		// bytes!!!
+unsigned char *MakeDwordAlignedBuf(unsigned char *dataBuf, unsigned int widthPix, unsigned int height, unsigned int *uiOutWidthBytes)
 {
-	unsigned int uiWidthBytes; unsigned long dwNewsize;
-	unsigned char *pNew; unsigned int uiInWidthBytes; unsigned int uiCount;
+	unsigned int uiWidthBytes;
+	unsigned long dwNewsize;
+	unsigned char *pNew;
+	unsigned int uiInWidthBytes;
+	unsigned int uiCount;
 
 	if (dataBuf==NULL)
 		return NULL;
