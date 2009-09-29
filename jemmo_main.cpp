@@ -12,17 +12,22 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with Jemmo. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _INC_MAIN
-#define _INC_MAIN
+#include <windows.h>
+#include "jemmo_image.h"
+#include "jemmo_main.h"
 
-#define IDM_NEW 0
-#define IDM_OPEN 1
-#define IDM_SAVE 2
+image *current_image;
 
-HWND CreateSimpleToolbar(HWND hWndParent);
-BOOL get_module_directory(TCHAR *obuf, size_t osize);
+void	jemmo_UpdateWindowSize(HWND hWnd)
+{
+	if (current_image == NULL)
+		return;
+	int width = current_image->width * current_image->zoom;
+	int height = current_image->height * current_image->zoom;
 
-#endif
+	MoveWindow(hWnd, 0, 0, width, height, TRUE);
+	SendMessage(hWnd, WM_SIZE, 0, 0);
+}

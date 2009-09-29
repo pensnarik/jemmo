@@ -59,8 +59,8 @@ read_jpeg(const char *filename, unsigned int *width, unsigned int *height)
 	jpeg_stdio_src(&cinfo, infile);
 
 	(void) jpeg_read_header(&cinfo, TRUE);
-	cinfo.scale_num = 1;
-	cinfo.scale_denom =2;
+//	cinfo.scale_num = 1;
+//	cinfo.scale_denom = 1;
 	
 	(void) jpeg_start_decompress(&cinfo);
 

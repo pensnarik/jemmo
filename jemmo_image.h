@@ -15,14 +15,25 @@
     along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _INC_MAIN
-#define _INC_MAIN
+#ifndef INC_JEMMO_IMAGE
+#define INC_JEMMO_IMAGE
 
-#define IDM_NEW 0
-#define IDM_OPEN 1
-#define IDM_SAVE 2
+typedef enum _source_format {
+	frtJFIF,
+	frtPNG,
+	frtBMP
+} __source_format;
 
-HWND CreateSimpleToolbar(HWND hWndParent);
-BOOL get_module_directory(TCHAR *obuf, size_t osize);
+typedef struct _image {
+	int width;
+	int height;
+	__source_format source_format;
+	float zoom;
+	unsigned char *data;
+} image;
 
-#endif
+__source_format jemmo_GetImageFormat(const char *FileName);
+image *			jemmo_LoadImage(const char *FileName);
+unsigned char * jemmo_LoadJpegImage();
+
+#endif //INC_JEMMO_IMAGE
