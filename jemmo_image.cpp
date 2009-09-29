@@ -23,6 +23,7 @@
 #include <windows.h>
 #include "jemmo_image.h"
 #include "jemmo_jpeg.h"
+#include "jemmo_malloc.h"
 
 __source_format jemmo_GetImageFormat(const char *FileName)
 {
@@ -30,13 +31,13 @@ __source_format jemmo_GetImageFormat(const char *FileName)
 	return frtJFIF;
 }
 
-image *			jemmo_LoadImage(const char *FileName)
+image *jemmo_LoadImage(const char *FileName)
 {
 	if (jemmo_GetImageFormat(FileName) != frtJFIF) {
 		return NULL;
 	} else {
 		/* JPEG */
-		image *img = (image *) malloc(sizeof(_image));
+		image *img = (image *) jemmo_malloc(sizeof(_image));
 		if(img == NULL) return NULL;
 		unsigned int width, height;
 		img->data = read_jpeg(FileName, &width, &height);
@@ -51,10 +52,10 @@ image *			jemmo_LoadImage(const char *FileName)
 	}
 }
 
-image *			jemmo_CloneImage(image *img)
+image *jemmo_CloneImage(image *img)
 {
 	if (img == NULL) return NULL;
-	image *tmp = (image *) malloc(sizeof(_image));
+	image *tmp = (image *) jemmo_malloc(sizeof(_image));
 	if (tmp == NULL) return NULL;
 
 	tmp->width = img->width;
@@ -62,7 +63,7 @@ image *			jemmo_CloneImage(image *img)
 	tmp->zoom = img->zoom;
 	tmp->size = img->size;
 	tmp->source_format = img->source_format;	// change to memcpy
-	tmp->data = (unsigned char *) malloc(tmp->size);
+	tmp->data = (unsigned char *) jemmo_malloc(tmp->size);
 	
 	if (tmp->data == NULL) return NULL;
 	memcpy(tmp->data, img->data, img->size);
