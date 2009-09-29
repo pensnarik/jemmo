@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <io.h>
 #include <CommCtrl.h> // requires Microsoft SDK
+#include <malloc.h>
 
 #include "main.h"
 
@@ -135,7 +136,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 				MessageBox(NULL, "Error loading image", "Error", MB_ICONERROR);
 			} else {
 				sprintf(str, "Image size: %d x %d, size: %d", current_image->width,
-						current_image->height, current_image->size);
+						current_image->height, _msize(current_image->data));
+			
 				MessageBox(NULL, str, "OK", MB_ICONINFORMATION);
 				DrawImage(current_image);
 				jemmo_UpdateWindowSize(hwnd);

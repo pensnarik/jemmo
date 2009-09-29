@@ -12,31 +12,25 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with Jemmo. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef INC_JEMMO_IMAGE
-#define INC_JEMMO_IMAGE
+#include <malloc.h>
+#include <windows.h>
 
-typedef enum _source_format {
-	frtJFIF,
-	frtPNG,
-	frtBMP
-} __source_format;
+unsigned long memallocated = 0;
 
-typedef struct _image {
-	int width;
-	int height;
-	__source_format source_format;
-	float zoom;
-	unsigned int size;
-	unsigned char *data;
-} image;
+void *jemmo_malloc(unsigned long size)
+{
+	void *p;
+	p = (void *) malloc(size);
+	memallocated += _msize(p);
+	return p;
+}
 
-__source_format jemmo_GetImageFormat(const char *FileName);
-image *			jemmo_LoadImage(const char *FileName);
-unsigned char * jemmo_LoadJpegImage();
-image *			jemmo_CloneImage(image *img);
-
-
-#endif //INC_JEMMO_IMAGE
+void *jemmo_mfree(void *p)
+{
+	memallocated -= _msize(p);
+	free(p);
+	return NULL;
+}

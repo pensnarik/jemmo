@@ -106,6 +106,10 @@ SOURCE=.\jemmo_main.cpp
 # End Source File
 # Begin Source File
 
+SOURCE=.\jemmo_malloc.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\main.cpp
 # End Source File
 # End Group
@@ -123,6 +127,10 @@ SOURCE=.\jemmo_jpeg.h
 # Begin Source File
 
 SOURCE=.\jemmo_main.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\jemmo_malloc.h
 # End Source File
 # Begin Source File
 
