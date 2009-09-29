@@ -12,17 +12,14 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with Jemmo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _INC_MAIN
-#define _INC_MAIN
+#ifndef _INC_JEMMO_MAIN
+#define _INC_JEMMO_MAIN
 
-#define IDM_NEW 0
-#define IDM_OPEN 1
-#define IDM_SAVE 2
+#include "jemmo_image.h"
 
-HWND CreateSimpleToolbar(HWND hWndParent);
-BOOL get_module_directory(TCHAR *obuf, size_t osize);
+void	jemmo_UpdateWindowSize(HWND hWnd);
 
-#endif
+#endif //_INC_JEMMO_MAIN

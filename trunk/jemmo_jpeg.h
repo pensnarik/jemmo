@@ -42,4 +42,4 @@ BOOL VertFlipBuf(BYTE  * inbuf, UINT widthBytes, UINT height);
 BOOL BGRFromRGB(BYTE *buf, UINT widthPix, UINT height);
 METHODDEF (void) my_error_exit (j_common_ptr cinfo);
 
-#endif
+#endif //_INC_JEMMO_JPEG

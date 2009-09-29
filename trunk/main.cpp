@@ -12,25 +12,27 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
+    along with Jemmo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <windows.h>
+#include <WinUser.h>
 #include <stdio.h>
 #include <stdlib.h>
-//#include <shlwapi.h>
 #include <io.h>
 #include <CommCtrl.h> // requires Microsoft SDK
 
 #include "main.h"
 
 #include "jemmo_jpeg.h"
-//#include "jpeglib/jpeglib.h"
+#include "jemmo_image.h"
+#include "jemmo_main.h"
 
 BOOL RegClass(WNDPROC, LPCSTR, UINT);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+BOOL get_module_directory(TCHAR *obuf, size_t osize);
 
-void DrawImage();
+void DrawImage(image *img);
 
 int TestJPEG(LPSTR FileName);
 
@@ -40,11 +42,10 @@ HINSTANCE hInst;
 char szClassName[] = "WindowAppClass";
 jvirt_sarray_ptr m1;
 HWND hwnd;
+extern image *current_image;
 
 // Глобальные переменные-атрибуты загруженного изображения
 
-unsigned int m_width;
-unsigned int m_height;
 unsigned int m_widthDW;
 
 unsigned char *image_data;
@@ -120,42 +121,34 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 		}
 	case WM_LBUTTONDOWN:
 		{
-			char buf[100]; char full_path[200];
+/*			char buf[100]; char full_path[200];
 			get_module_directory(buf, 100);
 			sprintf(full_path, "%s\\%s", buf, command_line);
 			TestJPEG(full_path);
 			if (_access(full_path, 0)) {
 				TestJPEG(full_path);
 			}
+*/
+			char str[255];
+			current_image = jemmo_LoadImage("testimg.jpg");
+			if (current_image == NULL) {
+				MessageBox(NULL, "Error loading image", "Error", MB_ICONERROR);
+			} else {
+				sprintf(str, "Image size: %d x %d", current_image->width, current_image->height);
+				MessageBox(NULL, str, "OK", MB_ICONINFORMATION);
+				DrawImage(current_image);
+				jemmo_UpdateWindowSize(hwnd);
+			}
 
 		}
 	case WM_CREATE:
 		{
 			CreateSimpleToolbar(hwnd);
-			CreateWindowEx(0L,
-						   "SCROLLBAR",
-						   NULL, 
-						   WS_CHILD | WS_VISIBLE,
-						   50,
-						   20,
-						   400,
-						   21,
-						   hwnd,
-						   NULL,
-						   hInst,
-						   NULL);
-
 		}
-//	case WM_PAINT:
-//		{
-//			if (image_data != NULL)
-//				DrawImage();
-//		}
-//	case WM_SIZE:
-//		{
-//			if (image_data != NULL)
-//				DrawImage();
-//		}
+	case 0x020a:
+		{
+//			MessageBox(NULL, "Wheel!", "test", MB_ICONINFORMATION);
+		}
 
 	}
 
@@ -187,20 +180,6 @@ BOOL get_module_directory(TCHAR *obuf, size_t osize)
     return TRUE;  
 } 
 
-int TestJPEG(LPSTR FileName)
-{
-	unsigned int x, y; char msg[100];
-
-	image_data = read_jpeg(FileName, &x, &y);
-	wsprintf(msg, "Image size: %d x %d", x, y);
-	m_width = x; m_height = y;
-	MessageBox(NULL, msg, "OK!", MB_ICONINFORMATION);
-	BGRFromRGB(image_data, x, y);
-	VertFlipBuf(image_data, x*3, y);
-	DrawImage();
-	return 0;
-}
-
 void ErrorMessage(char *msg)
 {
 	MessageBox(NULL, msg, "Error", MB_ICONERROR);
@@ -210,14 +189,12 @@ void ErrorMessage(char *msg)
 	DrawImage
 */
 
-void DrawImage()
+void DrawImage(image *img)
 {
 	HDC hDc; BITMAPINFOHEADER bmiHeader;
+	unsigned int left, top;
 	unsigned char *tmp;
-	unsigned int left; unsigned int top;
-	char msg[255];
-
-	if (image_data == NULL) {
+	if (img == NULL) {
 		MessageBox(NULL, "image_data is null", "Error", MB_ICONERROR);
 	} else {
 		hDc = GetDC(hwnd);
@@ -225,14 +202,14 @@ void DrawImage()
 			RECT rect;
 			GetClientRect(hwnd, &rect);
 
-			left = (rect.right - rect.left - m_width) / 2;
-			top  = (rect.top - rect.bottom - m_height) / 2;
+			left = (rect.right - rect.left - img->width) / 2;
+			top  = (rect.top - rect.bottom - img->height) / 2;
 
-			tmp = MakeDwordAlignedBuf(image_data, m_width, m_height, &m_widthDW);
+			tmp = MakeDwordAlignedBuf(img->data, img->width, img->height, &m_widthDW);
 
 			bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-			bmiHeader.biWidth = m_width;
-			bmiHeader.biHeight = m_height;
+			bmiHeader.biWidth = img->width;
+			bmiHeader.biHeight = img->height;
 			bmiHeader.biPlanes = 1;
 			bmiHeader.biBitCount = 24;
 			bmiHeader.biCompression = BI_RGB;
@@ -242,13 +219,10 @@ void DrawImage()
 			bmiHeader.biClrUsed = 0;
 			bmiHeader.biClrImportant = 0;
 			
-			wsprintf(msg, "Width: %d, Height: %d", m_width, m_height);
-			MessageBox(NULL, msg, "Info", MB_ICONINFORMATION);
-
 			// В StretchDIBits указываем ширину и высоту изображения, соответствующкую
 			// масштабу 1:1, т.к. судя по всему, эта функция довольно плохо масштабирует
 			// В дальнейшем попробуем использовать алгоритм Lanczos
-			StretchDIBits(hDc, 0, 0, m_width, m_height, 0, 0, m_width, m_height, tmp, (LPBITMAPINFO)&bmiHeader,
+			StretchDIBits(hDc, 0, 0, img->width, img->height, 0, 0, img->width, img->height, tmp, (LPBITMAPINFO)&bmiHeader,
 				DIB_RGB_COLORS, SRCCOPY);
 
 			ReleaseDC(hwnd, hDc);

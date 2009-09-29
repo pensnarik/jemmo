@@ -94,7 +94,15 @@ LINK32=link.exe
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
+SOURCE=.\jemmo_image.cpp
+# End Source File
+# Begin Source File
+
 SOURCE=.\jemmo_jpeg.cpp
+# End Source File
+# Begin Source File
+
+SOURCE=.\jemmo_main.cpp
 # End Source File
 # Begin Source File
 
@@ -106,7 +114,15 @@ SOURCE=.\main.cpp
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
 # Begin Source File
 
+SOURCE=.\jemmo_image.h
+# End Source File
+# Begin Source File
+
 SOURCE=.\jemmo_jpeg.h
+# End Source File
+# Begin Source File
+
+SOURCE=.\jemmo_main.h
 # End Source File
 # Begin Source File
 
