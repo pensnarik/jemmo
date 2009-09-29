@@ -18,11 +18,6 @@
 #ifndef _INC_MAIN
 #define _INC_MAIN
 
-#define IDM_NEW 0
-#define IDM_OPEN 1
-#define IDM_SAVE 2
-
-HWND CreateSimpleToolbar(HWND hWndParent);
 BOOL get_module_directory(TCHAR *obuf, size_t osize);
 
 #endif

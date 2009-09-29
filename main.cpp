@@ -39,10 +39,11 @@ int TestJPEG(LPSTR FileName);
 
 void ErrorMessage(char *msg);
 
-HINSTANCE hInst;
+extern HINSTANCE hInst;
 char szClassName[] = "WindowAppClass";
 jvirt_sarray_ptr m1;
-HWND hwnd;
+extern HWND hwnd;
+extern HWND hStatusBar;
 extern image *current_image;
 
 // Глобальные переменные-атрибуты загруженного изображения
@@ -67,7 +68,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 
 	if (!RegClass(WndProc, szClassName, COLOR_WINDOW)) return FALSE;
 	hwnd = CreateWindow(szClassName,
-						"FastJPEG",
+						"Jemmo",
 						WS_OVERLAPPEDWINDOW | WS_VISIBLE,
 						CW_USEDEFAULT,
 						CW_USEDEFAULT,
@@ -92,7 +93,10 @@ BOOL RegClass(WNDPROC proc,
 			  UINT brBackground)
 {
 	WNDCLASS wc;
-	wc.style = wc.cbClsExtra = wc.cbWndExtra = 0;
+//	wc.style = wc.cbClsExtra = wc.cbWndExtra = 0;
+	wc.cbClsExtra =0;
+	wc.cbWndExtra = 0;
+	wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
 	wc.lpfnWndProc = WndProc;
 	wc.hInstance = hInst;
 	wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
@@ -115,6 +119,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 {
 	switch(msg)
 	{
+	case WM_ERASEBKGND:		// Important!
+		return 1;
 	case WM_DESTROY:
 		{
 			PostQuitMessage(0);
@@ -122,23 +128,15 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 		}
 	case WM_LBUTTONDOWN:
 		{
-/*			char buf[100]; char full_path[200];
-			get_module_directory(buf, 100);
-			sprintf(full_path, "%s\\%s", buf, command_line);
-			TestJPEG(full_path);
-			if (_access(full_path, 0)) {
-				TestJPEG(full_path);
-			}
-*/
 			char str[255];
 			current_image = jemmo_LoadImage("testimg.jpg");
 			if (current_image == NULL) {
 				MessageBox(NULL, "Error loading image", "Error", MB_ICONERROR);
 			} else {
-				sprintf(str, "Image size: %d x %d, size: %d", current_image->width,
-						current_image->height, _msize(current_image->data));
+				sprintf(str, "Image size: %d x %d, size: %d KB", current_image->width,
+						current_image->height, _msize(current_image->data)/1024);
 			
-				MessageBox(NULL, str, "OK", MB_ICONINFORMATION);
+				MessageBox(NULL, str, "Jemmo", MB_ICONINFORMATION);
 				DrawImage(current_image);
 				jemmo_UpdateWindowSize(hwnd);
 			}
@@ -146,11 +144,23 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 		}
 	case WM_CREATE:
 		{
-			CreateSimpleToolbar(hwnd);
+			jemmo_AppInit();
+		}
+
+	case WM_SIZE:
+		{
+			SendMessage(hStatusBar, WM_SIZE, wParam, lParam);
+		}
+	case WM_PAINT:
+		{
+			jemmo_MainWindowRepaint;
+			DrawImage(current_image);
+			UpdateWindow(hStatusBar);
 		}
 	case 0x020a:
 		{
 //			MessageBox(NULL, "Wheel!", "test", MB_ICONINFORMATION);
+//			return 0;
 		}
 
 	}
@@ -198,7 +208,7 @@ void DrawImage(image *img)
 	unsigned int left, top;
 	unsigned char *tmp;
 	if (img == NULL) {
-		MessageBox(NULL, "image_data is null", "Error", MB_ICONERROR);
+		//MessageBox(NULL, "image_data is null", "Error", MB_ICONERROR);
 	} else {
 		hDc = GetDC(hwnd);
 		if (hDc != NULL) {
@@ -233,60 +243,4 @@ void DrawImage(image *img)
 			ErrorMessage("hDC is null");
 		}
 	} // if
-}
-
-HWND CreateSimpleToolbar(HWND hWndParent)
-{
-    // Define some constants.
-    const int ImageListID = 0;
-    const int numButtons = 3;
-    const DWORD buttonStyles = BTNS_AUTOSIZE;
-    const int bitmapSize = 16;
-
-    // Create the toolbar.
-    HWND hWndToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
-        WS_CHILD | TBSTYLE_WRAPABLE | TBSTYLE_FLAT,
-        0, 0, 0, 0,
-        hWndParent, NULL, hInst, NULL);
-    if (hWndToolbar == NULL)
-    {
-        return NULL;
-    }
-
-    // Create the imagelist.
-    HIMAGELIST hImageList = ImageList_Create(
-        bitmapSize, bitmapSize,   // Dimensions of individual bitmaps.
-        ILC_COLOR16 | ILC_MASK,   // Ensures transparent background.
-        numButtons, 0);
-
-    // Set the image list.
-    SendMessage(hWndToolbar, TB_SETIMAGELIST, (WPARAM)ImageListID, 
-        (LPARAM)hImageList);
-
-    // Load the button images.
-    SendMessage(hWndToolbar, TB_LOADIMAGES, (WPARAM)IDB_STD_SMALL_COLOR, 
-        (LPARAM)HINST_COMMCTRL);
-
-    // Initialize button info.
-    // IDM_NEW, IDM_OPEN, and IDM_SAVE are application-defined command constants.
-    TBBUTTON tbButtons[numButtons] = 
-    {
-        { MAKELONG(STD_FILENEW, ImageListID), IDM_NEW, TBSTATE_ENABLED, 
-          buttonStyles, {0}, 0, (INT_PTR)L"New" },
-        { MAKELONG(STD_FILEOPEN, ImageListID), IDM_OPEN, TBSTATE_ENABLED, 
-          buttonStyles, {0}, 0, (INT_PTR)L"Open"},
-        { MAKELONG(STD_FILESAVE, ImageListID), IDM_SAVE, 0, 
-          buttonStyles, {0}, 0, (INT_PTR)L"Save"}
-    };
-
-    // Add buttons.
-    SendMessage(hWndToolbar, TB_BUTTONSTRUCTSIZE, 
-        (WPARAM)sizeof(TBBUTTON), 0);
-    SendMessage(hWndToolbar, TB_ADDBUTTONS, (WPARAM)numButtons, 
-        (LPARAM)&tbButtons);
-
-    // Tell the toolbar to resize itself, and show it.
-    SendMessage(hWndToolbar, TB_AUTOSIZE, 0, 0); 
-    ShowWindow(hWndToolbar, TRUE);
-    return hWndToolbar;
 }
