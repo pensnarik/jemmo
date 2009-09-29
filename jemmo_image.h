@@ -29,11 +29,13 @@ typedef struct _image {
 	int height;
 	__source_format source_format;
 	float zoom;
+	unsigned int size;
 	unsigned char *data;
 } image;
 
 __source_format jemmo_GetImageFormat(const char *FileName);
 image *			jemmo_LoadImage(const char *FileName);
 unsigned char * jemmo_LoadJpegImage();
+image *			jemmo_CloneImage(image *img);
 
 #endif //INC_JEMMO_IMAGE

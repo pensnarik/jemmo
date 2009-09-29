@@ -43,8 +43,28 @@ image *			jemmo_LoadImage(const char *FileName)
 		img->width = width;
 		img->height = height;
 		img->zoom = 1;
+		img->source_format = frtJFIF;
+		img->size = width * 3 * height;
 		BGRFromRGB(img->data, width, height);
 		VertFlipBuf(img->data, width*3, height);
 		return img;
 	}
+}
+
+image *			jemmo_CloneImage(image *img)
+{
+	if (img == NULL) return NULL;
+	image *tmp = (image *) malloc(sizeof(_image));
+	if (tmp == NULL) return NULL;
+
+	tmp->width = img->width;
+	tmp->height = img->height;
+	tmp->zoom = img->zoom;
+	tmp->size = img->size;
+	tmp->source_format = img->source_format;	// change to memcpy
+	tmp->data = (unsigned char *) malloc(tmp->size);
+	
+	if (tmp->data == NULL) return NULL;
+	memcpy(tmp->data, img->data, img->size);
+	return tmp;
 }
