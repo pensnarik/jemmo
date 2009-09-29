@@ -20,6 +20,14 @@
 
 #include "jemmo_image.h"
 
+#define IDM_NEW 0
+#define IDM_OPEN 1
+#define IDM_SAVE 2
+
 void	jemmo_UpdateWindowSize(HWND hWnd);
+int		CreateStatusBar();
+HWND	CreateSimpleToolbar(HWND hWndParent);
+int		jemmo_MainWindowRepaint();
+int		jemmo_AppInit();
 
 #endif //_INC_JEMMO_MAIN

@@ -16,18 +16,123 @@
 */
 
 #include <windows.h>
+#include <commctrl.h>
 #include "jemmo_image.h"
 #include "jemmo_main.h"
 
 image *current_image;
+HWND hwnd;				// Main window handle
+HWND hStatusBar;		// Status bar
+HINSTANCE hInst;		// Program hInstance
+HBRUSH	bgBrush;
 
 void	jemmo_UpdateWindowSize(HWND hWnd)
 {
 	if (current_image == NULL)
 		return;
-	int width = current_image->width * current_image->zoom;
-	int height = current_image->height * current_image->zoom;
+	int width = current_image->width * current_image->zoom - 20;
+	int height = current_image->height * current_image->zoom - 20;
 
 	MoveWindow(hWnd, 0, 0, width, height, TRUE);
 	SendMessage(hWnd, WM_SIZE, 0, 0);
+}
+
+int CreateStatusBar()
+{
+	hStatusBar = CreateWindowEx(0,
+								STATUSCLASSNAME,
+								"Jemmo_Status",
+								SBARS_SIZEGRIP | WS_CHILD,
+								0,
+								0,
+								0,
+								0,
+								hwnd,
+								NULL, // Menu?
+								hInst,
+								NULL);
+	if (hStatusBar == NULL) return -1;
+	ShowWindow(hStatusBar, SW_SHOW);
+	return 0;
+}
+
+int	jemmo_MainWindowRepaint()
+{
+	RECT rect;
+	HDC hdc;
+	PAINTSTRUCT ps;
+
+	hdc = BeginPaint(hwnd, &ps);
+	GetClientRect(hwnd, &rect);
+	FillRect(hdc, &rect, bgBrush);
+
+	EndPaint(hwnd, &ps);
+
+	return 0;
+}
+
+int jemmo_AppInit()
+{
+	CreateSimpleToolbar(hwnd);
+	CreateStatusBar();
+
+	bgBrush = CreateSolidBrush(0x0000);
+
+	return 0;
+}
+
+HWND CreateSimpleToolbar(HWND hWndParent)
+{
+    // Define some constants.
+    const int ImageListID = 0;
+    const int numButtons = 3;
+    const DWORD buttonStyles = BTNS_AUTOSIZE;
+    const int bitmapSize = 16;
+
+    // Create the toolbar.
+    HWND hWndToolbar = CreateWindowEx(0, TOOLBARCLASSNAME, NULL, 
+        WS_CHILD | TBSTYLE_WRAPABLE | TBSTYLE_FLAT,
+        0, 0, 0, 0,
+        hWndParent, NULL, hInst, NULL);
+    if (hWndToolbar == NULL)
+    {
+        return NULL;
+    }
+
+    // Create the imagelist.
+    HIMAGELIST hImageList = ImageList_Create(
+        bitmapSize, bitmapSize,   // Dimensions of individual bitmaps.
+        ILC_COLOR16 | ILC_MASK,   // Ensures transparent background.
+        numButtons, 0);
+
+    // Set the image list.
+    SendMessage(hWndToolbar, TB_SETIMAGELIST, (WPARAM)ImageListID, 
+        (LPARAM)hImageList);
+
+    // Load the button images.
+    SendMessage(hWndToolbar, TB_LOADIMAGES, (WPARAM)IDB_STD_SMALL_COLOR, 
+        (LPARAM)HINST_COMMCTRL);
+
+    // Initialize button info.
+    // IDM_NEW, IDM_OPEN, and IDM_SAVE are application-defined command constants.
+    TBBUTTON tbButtons[numButtons] = 
+    {
+        { MAKELONG(STD_FILENEW, ImageListID), IDM_NEW, TBSTATE_ENABLED, 
+          buttonStyles, {0}, 0, (INT_PTR)L"New" },
+        { MAKELONG(STD_FILEOPEN, ImageListID), IDM_OPEN, TBSTATE_ENABLED, 
+          buttonStyles, {0}, 0, (INT_PTR)L"Open"},
+        { MAKELONG(STD_FILESAVE, ImageListID), IDM_SAVE, 0, 
+          buttonStyles, {0}, 0, (INT_PTR)L"Save"}
+    };
+
+    // Add buttons.
+    SendMessage(hWndToolbar, TB_BUTTONSTRUCTSIZE, 
+        (WPARAM)sizeof(TBBUTTON), 0);
+    SendMessage(hWndToolbar, TB_ADDBUTTONS, (WPARAM)numButtons, 
+        (LPARAM)&tbButtons);
+
+    // Tell the toolbar to resize itself, and show it.
+    SendMessage(hWndToolbar, TB_AUTOSIZE, 0, 0); 
+    ShowWindow(hWndToolbar, TRUE);
+    return hWndToolbar;
 }
