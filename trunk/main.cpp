@@ -134,7 +134,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 			if (current_image == NULL) {
 				MessageBox(NULL, "Error loading image", "Error", MB_ICONERROR);
 			} else {
-				sprintf(str, "Image size: %d x %d", current_image->width, current_image->height);
+				sprintf(str, "Image size: %d x %d, size: %d", current_image->width,
+						current_image->height, current_image->size);
 				MessageBox(NULL, str, "OK", MB_ICONINFORMATION);
 				DrawImage(current_image);
 				jemmo_UpdateWindowSize(hwnd);
