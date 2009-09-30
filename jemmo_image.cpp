@@ -39,7 +39,7 @@ image *jemmo_LoadImage(const char *FileName)
 		/* JPEG */
 		image *img = (image *) jemmo_malloc(sizeof(_image));
 		if(img == NULL) return NULL;
-		unsigned int width, height;
+		unsigned int width, height, m_widthDW;
 		img->data = read_jpeg(FileName, &width, &height);
 		img->width = width;
 		img->height = height;
@@ -48,6 +48,7 @@ image *jemmo_LoadImage(const char *FileName)
 		img->size = width * 3 * height;
 		BGRFromRGB(img->data, width, height);
 		VertFlipBuf(img->data, width*3, height);
+		img->aligned_data = MakeDwordAlignedBuf(img->data, img->width, img->height, &m_widthDW);
 		return img;
 	}
 }
@@ -68,4 +69,46 @@ image *jemmo_CloneImage(image *img)
 	if (tmp->data == NULL) return NULL;
 	memcpy(tmp->data, img->data, img->size);
 	return tmp;
+}
+
+unsigned char *MakeDwordAlignedBuf(unsigned char *dataBuf, unsigned int widthPix, unsigned int height, unsigned int *uiOutWidthBytes)
+{
+	unsigned int uiWidthBytes;
+	unsigned long dwNewsize;
+	unsigned char *pNew;
+	unsigned int uiInWidthBytes;
+	unsigned int uiCount;
+
+	if (dataBuf==NULL)
+		return NULL;
+
+	uiWidthBytes = WIDTHBYTES(widthPix * 24);
+
+	dwNewsize=(DWORD)((DWORD)uiWidthBytes * 
+							(DWORD)height);
+	
+	pNew=(unsigned char *)malloc(dwNewsize);
+	if (pNew==NULL) {
+		return NULL;
+	}
+	
+	uiInWidthBytes = widthPix * 3;
+	
+	for (uiCount=0;uiCount < height;uiCount++) {
+		unsigned char * bpInAdd;
+		unsigned char * bpOutAdd;
+		unsigned long lInOff;
+		unsigned long lOutOff;
+
+		lInOff=uiInWidthBytes * uiCount;
+		lOutOff=uiWidthBytes * uiCount;
+
+		bpInAdd= dataBuf + lInOff;
+		bpOutAdd= pNew + lOutOff;
+
+		memcpy(bpOutAdd,bpInAdd,uiInWidthBytes);
+	}
+
+	*uiOutWidthBytes=uiWidthBytes;
+	return pNew;
 }

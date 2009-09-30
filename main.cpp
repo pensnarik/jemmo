@@ -153,7 +153,7 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 		}
 	case WM_PAINT:
 		{
-			jemmo_MainWindowRepaint;
+			jemmo_MainWindowRepaint();
 			DrawImage(current_image);
 			UpdateWindow(hStatusBar);
 		}
@@ -215,10 +215,10 @@ void DrawImage(image *img)
 			RECT rect;
 			GetClientRect(hwnd, &rect);
 
-			left = (rect.right - rect.left - img->width) / 2;
-			top  = (rect.top - rect.bottom - img->height) / 2;
+			left = ((rect.right - rect.left)/2 - img->width/2);
+			top  = ((rect.bottom - rect.top)/2 - img->height/2);
 
-			tmp = MakeDwordAlignedBuf(img->data, img->width, img->height, &m_widthDW);
+			tmp = img->aligned_data; //MakeDwordAlignedBuf(img->data, img->width, img->height, &m_widthDW);
 
 			bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
 			bmiHeader.biWidth = img->width;
@@ -235,7 +235,11 @@ void DrawImage(image *img)
 			// В StretchDIBits указываем ширину и высоту изображения, соответствующкую
 			// масштабу 1:1, т.к. судя по всему, эта функция довольно плохо масштабирует
 			// В дальнейшем попробуем использовать алгоритм Lanczos
-			StretchDIBits(hDc, 0, 0, img->width, img->height, 0, 0, img->width, img->height, tmp, (LPBITMAPINFO)&bmiHeader,
+			//StretchDIBits(hDc, 0, 0, img->width, img->height, 0, 0, img->width, img->height, tmp, (LPBITMAPINFO)&bmiHeader,
+			//	DIB_RGB_COLORS, SRCCOPY);
+			SetStretchBltMode(hDc, COLORONCOLOR);
+			SetBrushOrgEx(hDc, 0, 0, NULL);
+			StretchDIBits(hDc, left, top, img->width, img->height, 0, 0, img->width, img->height, tmp, (LPBITMAPINFO)&bmiHeader,
 				DIB_RGB_COLORS, SRCCOPY);
 
 			ReleaseDC(hwnd, hDc);
