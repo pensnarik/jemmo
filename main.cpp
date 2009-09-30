@@ -69,7 +69,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
 	if (!RegClass(WndProc, szClassName, COLOR_WINDOW)) return FALSE;
 	hwnd = CreateWindow(szClassName,
 						"Jemmo",
-						WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+						WS_OVERLAPPEDWINDOW | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL,
 						CW_USEDEFAULT,
 						CW_USEDEFAULT,
 						CW_USEDEFAULT,
@@ -162,7 +162,17 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 //			MessageBox(NULL, "Wheel!", "test", MB_ICONINFORMATION);
 //			return 0;
 		}
-
+	case WM_VSCROLL:
+		{
+			int tmp = GetScrollPos(hwnd, SB_VERT);
+			switch(LOWORD(wParam)) {
+			case SB_LINEUP:
+				tmp = max(0, tmp - 10);
+			case SB_LINEDOWN:
+				tmp += 10;
+			}
+			SetScrollPos(hwnd, SB_VERT, tmp, FALSE);
+		}
 	}
 
 	return DefWindowProc(hwnd, msg, wParam, lParam);
