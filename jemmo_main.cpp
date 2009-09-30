@@ -58,6 +58,8 @@ int CreateStatusBar()
 
 int	jemmo_MainWindowRepaint()
 {
+	// ToDo
+	// Вынести GetSystemMetrics из процедуры
 	RECT rLeft, rBottom, rTop, rRight, rect /* main window rect */;
 	HDC hdc;
 	PAINTSTRUCT ps;
@@ -68,6 +70,8 @@ int	jemmo_MainWindowRepaint()
 		GetClientRect(hwnd, &rect);
 		// We have to fill 4 rects to paint a border around the image
 		// Now we'll calculate them
+		rect.bottom -= GetSystemMetrics(SM_CYCAPTION);
+
 		rLeft.left = 0;
 		rLeft.top = 0;
 		rLeft.bottom = rect.bottom;
@@ -82,7 +86,7 @@ int	jemmo_MainWindowRepaint()
 
 		rTop.left = 0;
 		rTop.top = 0;
-		rTop.bottom = (rect.bottom/2 - current_image->height/2);
+		rTop.bottom = (rect.bottom/2 - current_image->height/2) + GetSystemMetrics(SM_CYCAPTION);
 		rTop.right = rect.right;
 		FillRect(hdc, &rTop, bgBrush);
 
@@ -93,6 +97,11 @@ int	jemmo_MainWindowRepaint()
 		FillRect(hdc, &rBottom, bgBrush);
 
 		EndPaint(hwnd, &ps);
+	} else {
+		hdc = BeginPaint(hwnd, &ps);
+		GetClientRect(hwnd, &rect);
+		FillRect(hdc, &rect, bgBrush);
+		EndPaint(hwnd, &ps);
 	}
 
 	return 0;
@@ -101,7 +110,7 @@ int	jemmo_MainWindowRepaint()
 int jemmo_AppInit()
 {
 //	CreateSimpleToolbar(hwnd);
-//	CreateStatusBar();
+	CreateStatusBar();
 
 	bgBrush = CreateSolidBrush(0x0000);
 
