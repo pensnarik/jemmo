@@ -70,7 +70,7 @@ int	jemmo_MainWindowRepaint()
 		GetClientRect(hwnd, &rect);
 		// We have to fill 4 rects to paint a border around the image
 		// Now we'll calculate them
-		rect.bottom -= GetSystemMetrics(SM_CYCAPTION);
+		//rect.bottom -= GetSystemMetrics(SM_CYCAPTION);
 
 		rLeft.left = 0;
 		rLeft.top = 0;
@@ -86,7 +86,7 @@ int	jemmo_MainWindowRepaint()
 
 		rTop.left = 0;
 		rTop.top = 0;
-		rTop.bottom = (rect.bottom/2 - current_image->height/2) + GetSystemMetrics(SM_CYCAPTION);
+		rTop.bottom = (rect.bottom/2 - current_image->height/2);// + GetSystemMetrics(SM_CYCAPTION);
 		rTop.right = rect.right;
 		FillRect(hdc, &rTop, bgBrush);
 
@@ -110,7 +110,8 @@ int	jemmo_MainWindowRepaint()
 int jemmo_AppInit()
 {
 //	CreateSimpleToolbar(hwnd);
-	CreateStatusBar();
+//	CreateStatusBar();
+	SetScrollRange(hwnd, SB_VERT, 0, 100, TRUE);
 
 	bgBrush = CreateSolidBrush(0x0000);
 
