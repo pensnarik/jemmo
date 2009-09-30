@@ -31,12 +31,14 @@ typedef struct _image {
 	float zoom;
 	unsigned int size;
 	unsigned char *data;
+	unsigned char *aligned_data;
 } image;
 
 __source_format jemmo_GetImageFormat(const char *FileName);
 image *			jemmo_LoadImage(const char *FileName);
 unsigned char * jemmo_LoadJpegImage();
 image *			jemmo_CloneImage(image *img);
+unsigned char  *MakeDwordAlignedBuf(unsigned char *dataBuf, unsigned int widthPix, unsigned int height, unsigned int *uiOutWidthBytes);
 
 
 #endif //INC_JEMMO_IMAGE

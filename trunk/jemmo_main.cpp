@@ -58,23 +58,50 @@ int CreateStatusBar()
 
 int	jemmo_MainWindowRepaint()
 {
-	RECT rect;
+	RECT rLeft, rBottom, rTop, rRight, rect /* main window rect */;
 	HDC hdc;
 	PAINTSTRUCT ps;
 
-	hdc = BeginPaint(hwnd, &ps);
-	GetClientRect(hwnd, &rect);
-	FillRect(hdc, &rect, bgBrush);
+	if (current_image != NULL)
+	{
+		hdc = BeginPaint(hwnd, &ps);
+		GetClientRect(hwnd, &rect);
+		// We have to fill 4 rects to paint a border around the image
+		// Now we'll calculate them
+		rLeft.left = 0;
+		rLeft.top = 0;
+		rLeft.bottom = rect.bottom;
+		rLeft.right = (rect.right/2 - current_image->width/2);
+		FillRect(hdc, &rLeft, bgBrush);
 
-	EndPaint(hwnd, &ps);
+		rRight.left = (rect.right/2 +current_image->width/2);
+		rRight.top = 0;
+		rRight.bottom = rect.bottom;
+		rRight.right = rect.right;
+		FillRect(hdc, &rRight, bgBrush);
+
+		rTop.left = 0;
+		rTop.top = 0;
+		rTop.bottom = (rect.bottom/2 - current_image->height/2);
+		rTop.right = rect.right;
+		FillRect(hdc, &rTop, bgBrush);
+
+		rBottom.left = 0;
+		rBottom.top = (rect.bottom/2 + current_image->height/2);
+		rBottom.bottom = rect.bottom;
+		rBottom.right = rect.right;
+		FillRect(hdc, &rBottom, bgBrush);
+
+		EndPaint(hwnd, &ps);
+	}
 
 	return 0;
 }
 
 int jemmo_AppInit()
 {
-	CreateSimpleToolbar(hwnd);
-	CreateStatusBar();
+//	CreateSimpleToolbar(hwnd);
+//	CreateStatusBar();
 
 	bgBrush = CreateSolidBrush(0x0000);
 
