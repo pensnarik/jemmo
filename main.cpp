@@ -16,6 +16,7 @@
 */
 
 #include <windows.h>
+#include <windowsx.h>
 #include <WinUser.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,6 +25,7 @@
 #include <malloc.h>
 
 #include "main.h"
+#include "resource.h"
 
 #include "jemmo_jpeg.h"
 #include "jemmo_image.h"
@@ -45,6 +47,7 @@ jvirt_sarray_ptr m1;
 extern HWND hwnd;
 extern HWND hStatusBar;
 extern image *current_image;
+
 
 // Глобальные переменные-атрибуты загруженного изображения
 
@@ -112,11 +115,13 @@ BOOL RegClass(WNDPROC proc,
 	WndProc
 */
 
-LRESULT CALLBACK WndProc(HWND hwnd,
+LRESULT CALLBACK WndProc(HWND hWnd,
 						 UINT msg,
 						 WPARAM wParam,
 						 LPARAM lParam)
 {
+	int xPos; int yPos;
+
 	switch(msg)
 	{
 	case WM_ERASEBKGND:		// Important!
@@ -142,6 +147,8 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 			}
 
 		}
+	case WM_RBUTTONUP:
+		jemmo_RButtonDown(hWnd, wParam, lParam);
 	case WM_CREATE:
 		{
 			jemmo_AppInit();
@@ -164,18 +171,23 @@ LRESULT CALLBACK WndProc(HWND hwnd,
 		}
 	case WM_VSCROLL:
 		{
-			int tmp = GetScrollPos(hwnd, SB_VERT);
+			int tmp = GetScrollPos(hWnd, SB_VERT);
 			switch(LOWORD(wParam)) {
 			case SB_LINEUP:
 				tmp = max(0, tmp - 10);
 			case SB_LINEDOWN:
 				tmp += 10;
 			}
-			SetScrollPos(hwnd, SB_VERT, tmp, FALSE);
+			SetScrollPos(hWnd, SB_VERT, tmp, FALSE);
+		}
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+		case MNU_NEXT:
+			MessageBox(hWnd, "NEXT!", "Msg", MB_ICONINFORMATION);
 		}
 	}
 
-	return DefWindowProc(hwnd, msg, wParam, lParam);
+	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 BOOL get_module_directory(TCHAR *obuf, size_t osize)  
