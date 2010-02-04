@@ -44,7 +44,7 @@ void	jemmo_RButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	GetCursorPos(&pos);
 
 	hPopupMenu = GetSubMenu(LoadMenu(hInst, (LPCTSTR)IDR_POPUPMENU), 0);
-	TrackPopupMenu(hPopupMenu, TPM_LEFTALIGN | /*TPM_RETURNCMD |*/ TPM_RIGHTBUTTON,  pos.x, pos.y, 0, hWnd, NULL);
+	TrackPopupMenu(hPopupMenu, TPM_LEFTALIGN | TPM_TOPALIGN | TPM_RIGHTBUTTON,  pos.x, pos.y, 0, hWnd, NULL);
 	DestroyMenu(hPopupMenu);
 }
 
@@ -131,8 +131,8 @@ int	jemmo_MainWindowRepaint()
 
 int jemmo_AppInit()
 {
-//	CreateSimpleToolbar(hwnd);
-//	CreateStatusBar();
+	CreateSimpleToolbar(hwnd);
+	CreateStatusBar();
 	SetScrollRange(hwnd, SB_VERT, 0, 100, TRUE);
 
 	bgBrush = CreateSolidBrush(0x0000);

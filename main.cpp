@@ -12,7 +12,7 @@
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Jemmo.  If not, see <http://www.gnu.org/licenses/>.
+    along with Jemmo. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include <windows.h>
@@ -141,33 +141,38 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 				sprintf(str, "Image size: %d x %d, size: %d KB", current_image->width,
 						current_image->height, _msize(current_image->data)/1024);
 			
-				MessageBox(NULL, str, "Jemmo", MB_ICONINFORMATION);
+				//MessageBox(NULL, str, "Jemmo", MB_ICONINFORMATION);
 				DrawImage(current_image);
 				jemmo_UpdateWindowSize(hwnd);
 			}
+			return 0;
 
 		}
-	case WM_RBUTTONUP:
-		jemmo_RButtonDown(hWnd, wParam, lParam);
+	case WM_RBUTTONDOWN:
+			jemmo_RButtonDown(hWnd, wParam, lParam);
+			return 0;
 	case WM_CREATE:
 		{
 			jemmo_AppInit();
+			return 0;
 		}
 
 	case WM_SIZE:
 		{
 			SendMessage(hStatusBar, WM_SIZE, wParam, lParam);
+			return 0;
 		}
 	case WM_PAINT:
 		{
 			jemmo_MainWindowRepaint();
 			DrawImage(current_image);
 			UpdateWindow(hStatusBar);
+			return 0;
 		}
 	case 0x020a:
 		{
-//			MessageBox(NULL, "Wheel!", "test", MB_ICONINFORMATION);
-//			return 0;
+			MessageBox(NULL, "Wheel!", "test", MB_ICONINFORMATION);
+			return 0;
 		}
 	case WM_VSCROLL:
 		{
@@ -179,12 +184,16 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 				tmp += 10;
 			}
 			SetScrollPos(hWnd, SB_VERT, tmp, FALSE);
+			return 0;
 		}
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case MNU_NEXT:
 			MessageBox(hWnd, "NEXT!", "Msg", MB_ICONINFORMATION);
+		case MNU_PREV:
+			MessageBox(hWnd, "PREV ;(", "Msg", MB_ICONINFORMATION);
 		}
+		return 0;
 	}
 
 	return DefWindowProc(hWnd, msg, wParam, lParam);
