@@ -19,12 +19,34 @@
 #include <commctrl.h>
 #include "jemmo_image.h"
 #include "jemmo_main.h"
+#include "resource.h"
 
 image *current_image;
 HWND hwnd;				// Main window handle
 HWND hStatusBar;		// Status bar
 HINSTANCE hInst;		// Program hInstance
 HBRUSH	bgBrush;
+
+void	jemmo_NextImage()
+{
+}
+
+void	jemmo_PreviousImage()
+{
+}
+
+
+void	jemmo_RButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam)
+{
+	HMENU	hPopupMenu;
+	POINT pos;
+
+	GetCursorPos(&pos);
+
+	hPopupMenu = GetSubMenu(LoadMenu(hInst, (LPCTSTR)IDR_POPUPMENU), 0);
+	TrackPopupMenu(hPopupMenu, TPM_LEFTALIGN | /*TPM_RETURNCMD |*/ TPM_RIGHTBUTTON,  pos.x, pos.y, 0, hWnd, NULL);
+	DestroyMenu(hPopupMenu);
+}
 
 void	jemmo_UpdateWindowSize(HWND hWnd)
 {

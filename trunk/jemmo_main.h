@@ -29,5 +29,6 @@ int		CreateStatusBar();
 HWND	CreateSimpleToolbar(HWND hWndParent);
 int		jemmo_MainWindowRepaint();
 int		jemmo_AppInit();
+void	jemmo_RButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam);
 
 #endif //_INC_JEMMO_MAIN
