@@ -24,11 +24,30 @@
 #define IDM_OPEN 1
 #define IDM_SAVE 2
 
+//typedef struct __image_file_info;
+
+/* Структура, в которой храним информацию о файле изображения,
+   для хранения ифнормации о списке файлов попробуем использовать
+   связанные списки */
+
+typedef struct _image_file_info {
+	char FileName;
+	int FileSize;
+	__source_format source_format;
+	struct _image_file_info *prev;
+	struct _image_file_info *next;
+} __image_file_info;
+
+__image_file_info *ifi_cur;
+__image_file_info *ifi_first;
+
 void	jemmo_UpdateWindowSize(HWND hWnd);
 int		CreateStatusBar();
 HWND	CreateSimpleToolbar(HWND hWndParent);
 int		jemmo_MainWindowRepaint();
 int		jemmo_AppInit();
 void	jemmo_RButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam);
+void	jemmo_PreviousImage();
+void	jemmo_NextImage();
 
 #endif //_INC_JEMMO_MAIN

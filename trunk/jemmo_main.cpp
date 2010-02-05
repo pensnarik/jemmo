@@ -19,6 +19,7 @@
 #include <commctrl.h>
 #include "jemmo_image.h"
 #include "jemmo_main.h"
+#include "jemmo_malloc.h"
 #include "resource.h"
 
 image *current_image;
@@ -26,6 +27,25 @@ HWND hwnd;				// Main window handle
 HWND hStatusBar;		// Status bar
 HINSTANCE hInst;		// Program hInstance
 HBRUSH	bgBrush;
+LPWIN32_FIND_DATA lpFindFileData;
+
+/* Получение списка файлов в директории */
+
+void	jemmo_GetDirectoryListing(char *dirname)
+{
+	HANDLE f;
+	f = FindFirstFile("*.JPG", lpFindFileData);
+	ifi_cur = (_image_file_info *) jemmo_malloc(sizeof(__image_file_info));
+	if (f != INVALID_HANDLE_VALUE)
+	{
+		do
+		{
+
+		}
+		while (FindNextFile(f, lpFindFileData) != 0);
+		FindClose(f);
+	}
+}
 
 void	jemmo_NextImage()
 {
