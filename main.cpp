@@ -120,8 +120,6 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 						 WPARAM wParam,
 						 LPARAM lParam)
 {
-	int xPos; int yPos;
-
 	switch(msg)
 	{
 	case WM_ERASEBKGND:		// Important!
@@ -189,9 +187,11 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 	case WM_COMMAND:
 		switch (LOWORD(wParam)) {
 		case MNU_NEXT:
-			MessageBox(hWnd, "NEXT!", "Msg", MB_ICONINFORMATION);
+			jemmo_NextImage();
+			return 0;
 		case MNU_PREV:
-			MessageBox(hWnd, "PREV ;(", "Msg", MB_ICONINFORMATION);
+			jemmo_PreviousImage();
+			return 0;
 		}
 		return 0;
 	}
