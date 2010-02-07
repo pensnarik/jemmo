@@ -35,8 +35,6 @@ BOOL RegClass(WNDPROC, LPCSTR, UINT);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 BOOL get_module_directory(TCHAR *obuf, size_t osize);
 
-void DrawImage(image *img);
-
 int TestJPEG(LPSTR FileName);
 
 void ErrorMessage(char *msg);
@@ -44,9 +42,9 @@ void ErrorMessage(char *msg);
 extern HINSTANCE hInst;
 char szClassName[] = "WindowAppClass";
 jvirt_sarray_ptr m1;
-extern HWND hwnd;
 extern HWND hStatusBar;
 extern image *current_image;
+extern HWND hwnd;
 
 
 // Глобальные переменные-атрибуты загруженного изображения
@@ -54,7 +52,6 @@ extern image *current_image;
 unsigned int m_widthDW;
 
 unsigned char *image_data;
-LPSTR	command_line;
 
 /*
 	WinMain
@@ -66,8 +63,6 @@ int WINAPI WinMain(HINSTANCE hInstance,
                      int       nCmdShow)
 {
 	MSG msg; 
-	
-	command_line = lpCmdLine;
 
 	if (!RegClass(WndProc, szClassName, COLOR_WINDOW)) return FALSE;
 	hwnd = CreateWindow(szClassName,
@@ -131,6 +126,7 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 		}
 	case WM_LBUTTONDOWN:
 		{
+			return 0;
 			char str[255];
 			current_image = jemmo_LoadImage("testimg.jpg");
 			if (current_image == NULL) {
@@ -140,7 +136,7 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 						current_image->height, _msize(current_image->data)/1024);
 			
 				//MessageBox(NULL, str, "Jemmo", MB_ICONINFORMATION);
-				DrawImage(current_image);
+				jemmo_DrawImage(current_image);
 				jemmo_UpdateWindowSize(hwnd);
 			}
 			return 0;
@@ -163,7 +159,7 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 	case WM_PAINT:
 		{
 			jemmo_MainWindowRepaint();
-			DrawImage(current_image);
+			jemmo_DrawImage(current_image);
 			UpdateWindow(hStatusBar);
 			return 0;
 		}
@@ -227,55 +223,4 @@ BOOL get_module_directory(TCHAR *obuf, size_t osize)
 void ErrorMessage(char *msg)
 {
 	MessageBox(NULL, msg, "Error", MB_ICONERROR);
-}
-
-/*
-	DrawImage
-*/
-
-void DrawImage(image *img)
-{
-	HDC hDc; BITMAPINFOHEADER bmiHeader;
-	unsigned int left, top;
-	unsigned char *tmp;
-	if (img == NULL) {
-		//MessageBox(NULL, "image_data is null", "Error", MB_ICONERROR);
-	} else {
-		hDc = GetDC(hwnd);
-		if (hDc != NULL) {
-			RECT rect;
-			GetClientRect(hwnd, &rect);
-
-			left = ((rect.right - rect.left)/2 - img->width/2);
-			top  = ((rect.bottom - rect.top)/2 - img->height/2);
-
-			tmp = img->aligned_data; //MakeDwordAlignedBuf(img->data, img->width, img->height, &m_widthDW);
-
-			bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-			bmiHeader.biWidth = img->width;
-			bmiHeader.biHeight = img->height;
-			bmiHeader.biPlanes = 1;
-			bmiHeader.biBitCount = 24;
-			bmiHeader.biCompression = BI_RGB;
-			bmiHeader.biSizeImage = 0;
-			bmiHeader.biXPelsPerMeter = 0;
-			bmiHeader.biYPelsPerMeter = 0;
-			bmiHeader.biClrUsed = 0;
-			bmiHeader.biClrImportant = 0;
-			
-			// В StretchDIBits указываем ширину и высоту изображения, соответствующкую
-			// масштабу 1:1, т.к. судя по всему, эта функция довольно плохо масштабирует
-			// В дальнейшем попробуем использовать алгоритм Lanczos
-			//StretchDIBits(hDc, 0, 0, img->width, img->height, 0, 0, img->width, img->height, tmp, (LPBITMAPINFO)&bmiHeader,
-			//	DIB_RGB_COLORS, SRCCOPY);
-			SetStretchBltMode(hDc, COLORONCOLOR);
-			SetBrushOrgEx(hDc, 0, 0, NULL);
-			StretchDIBits(hDc, left, top, img->width, img->height, 0, 0, img->width, img->height, tmp, (LPBITMAPINFO)&bmiHeader,
-				DIB_RGB_COLORS, SRCCOPY);
-
-			ReleaseDC(hwnd, hDc);
-		} else {
-			ErrorMessage("hDC is null");
-		}
-	} // if
 }

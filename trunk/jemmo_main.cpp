@@ -21,13 +21,65 @@
 #include "jemmo_main.h"
 #include "jemmo_malloc.h"
 #include "resource.h"
+#include <shlwapi.h>
 
 image *current_image;
-HWND hwnd;				// Main window handle
 HWND hStatusBar;		// Status bar
 HINSTANCE hInst;		// Program hInstance
 HBRUSH	bgBrush;
+HWND hwnd;
+
 LPWIN32_FIND_DATA lpFindFileData;
+__image_file_info *ifi_cur;
+__image_file_info *ifi_first;
+char * command_line;
+extern HWND hwnd;
+
+bool	jemmo_CheckSingleFile(const char *command_line)
+{
+	TCHAR fullpath[MAX_PATH];
+
+	GetFullPathName(command_line, MAX_PATH, fullpath, NULL); 
+	if (PathFileExists(fullpath)) {
+		return true;
+	}
+	return false;
+}
+
+/* Разбор параметров коммандной строки */
+
+void	jemmo_ParseCommandLine()
+{
+	command_line = GetCommandLineA();
+	size_t command_length;
+
+	char stopChar = ' ';
+
+	if (command_line[0] == '\"') {
+		stopChar = '\"';
+		command_line++;
+	}
+	
+	while (command_line[0] && command_line[0] != stopChar) 
+		command_line++;
+	command_line++;
+	while (command_line[0] == ' ')
+		command_line++;
+	/* Теперь мы исключили пусть к исполняемому файлу с учетом того,
+	   что он может быть заключен в кавычки. Далее может быть имя файла
+	   или директории */
+	if (command_line[0] == '\"') command_line++;
+	command_length = lstrlen(command_line);
+	if (command_line[command_length-1] == '\"') command_line[command_length-1] = 0;
+	/* Если есть такой файл, то открываем его, в противном случае предполагаем,
+	   что в качестве параметра указана директория, тогда нужно прочитать ее и
+	   составить список всех файлов */
+	if (jemmo_CheckSingleFile(command_line)) {
+		jemmo_OpenImage(command_line);
+	} else {
+		//jemmo_GetDirectoryListing(command_line);
+	}
+}
 
 /* Получение списка файлов в директории */
 
@@ -40,7 +92,8 @@ void	jemmo_GetDirectoryListing(char *dirname)
 	{
 		do
 		{
-
+			strcpy(&ifi_cur->FileName, lpFindFileData->cFileName);
+			ifi_cur->source_format = frtJFIF;
 		}
 		while (FindNextFile(f, lpFindFileData) != 0);
 		FindClose(f);
@@ -49,6 +102,7 @@ void	jemmo_GetDirectoryListing(char *dirname)
 
 void	jemmo_NextImage()
 {
+	jemmo_ParseCommandLine();
 }
 
 void	jemmo_PreviousImage()
@@ -72,8 +126,8 @@ void	jemmo_UpdateWindowSize(HWND hWnd)
 {
 	if (current_image == NULL)
 		return;
-	int width = current_image->width * current_image->zoom - 20;
-	int height = current_image->height * current_image->zoom - 20;
+	int width = (int) current_image->width * current_image->zoom - 20;
+	int height = (int) current_image->height * current_image->zoom - 20;
 
 	MoveWindow(hWnd, 0, 0, width, height, TRUE);
 	SendMessage(hWnd, WM_SIZE, 0, 0);
@@ -154,8 +208,10 @@ int jemmo_AppInit()
 	CreateSimpleToolbar(hwnd);
 	CreateStatusBar();
 	SetScrollRange(hwnd, SB_VERT, 0, 100, TRUE);
-
+	
 	bgBrush = CreateSolidBrush(0x0000);
+
+	jemmo_ParseCommandLine();
 
 	return 0;
 }
@@ -214,4 +270,75 @@ HWND CreateSimpleToolbar(HWND hWndParent)
     SendMessage(hWndToolbar, TB_AUTOSIZE, 0, 0); 
     ShowWindow(hWndToolbar, TRUE);
     return hWndToolbar;
+}
+
+void	jemmo_DrawImage(image *img)
+{
+	HDC hDc; BITMAPINFOHEADER bmiHeader;
+	unsigned int left, top;
+	unsigned char *tmp;
+	if (hwnd == 0) return;
+	if (img == NULL) {
+		return;
+	} else {
+		hDc = GetDC(hwnd);
+		if (hDc != NULL) {
+			RECT rect;
+			GetClientRect(hwnd, &rect);
+
+			left = ((rect.right - rect.left)/2 - img->width/2);
+			top  = ((rect.bottom - rect.top)/2 - img->height/2);
+
+			tmp = img->aligned_data; //MakeDwordAlignedBuf(img->data, img->width, img->height, &m_widthDW);
+
+			bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+			bmiHeader.biWidth = img->width;
+			bmiHeader.biHeight = img->height;
+			bmiHeader.biPlanes = 1;
+			bmiHeader.biBitCount = 24;
+			bmiHeader.biCompression = BI_RGB;
+			bmiHeader.biSizeImage = 0;
+			bmiHeader.biXPelsPerMeter = 0;
+			bmiHeader.biYPelsPerMeter = 0;
+			bmiHeader.biClrUsed = 0;
+			bmiHeader.biClrImportant = 0;
+			
+			// В StretchDIBits указываем ширину и высоту изображения, соответствующкую
+			// масштабу 1:1, т.к. судя по всему, эта функция довольно плохо масштабирует
+			// В дальнейшем попробуем использовать алгоритм Lanczos
+			//StretchDIBits(hDc, 0, 0, img->width, img->height, 0, 0, img->width, img->height, tmp, (LPBITMAPINFO)&bmiHeader,
+			//	DIB_RGB_COLORS, SRCCOPY);
+			SetStretchBltMode(hDc, COLORONCOLOR);
+			SetBrushOrgEx(hDc, 0, 0, NULL);
+			StretchDIBits(hDc, left, top, img->width, img->height, 0, 0, img->width, img->height, tmp, (LPBITMAPINFO)&bmiHeader,
+				DIB_RGB_COLORS, SRCCOPY);
+
+			ReleaseDC(hwnd, hDc);
+		} else {
+			jemmo_Error("hDC is null");
+		}
+	} // if
+}
+
+void	jemmo_Error(char *msg)
+{
+	MessageBox(hwnd, msg, "Error", MB_ICONERROR);
+}
+
+int		jemmo_OpenImage(const char* filename)
+{
+	char str[MAX_PATH];
+
+	current_image = jemmo_LoadImage(filename);
+	if (current_image == NULL) {
+		jemmo_Error("Error loading image");
+	} else {
+		sprintf(str, "Image size: %d x %d, size: %d KB", current_image->width,
+				current_image->height, _msize(current_image->data)/1024);
+	
+	jemmo_DrawImage(current_image);
+	jemmo_UpdateWindowSize(hwnd);
+	}
+
+	return 0;
 }

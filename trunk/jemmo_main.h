@@ -18,6 +18,9 @@
 #ifndef _INC_JEMMO_MAIN
 #define _INC_JEMMO_MAIN
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <malloc.h>
 #include "jemmo_image.h"
 
 #define IDM_NEW 0
@@ -38,9 +41,6 @@ typedef struct _image_file_info {
 	struct _image_file_info *next;
 } __image_file_info;
 
-__image_file_info *ifi_cur;
-__image_file_info *ifi_first;
-
 void	jemmo_UpdateWindowSize(HWND hWnd);
 int		CreateStatusBar();
 HWND	CreateSimpleToolbar(HWND hWndParent);
@@ -49,5 +49,11 @@ int		jemmo_AppInit();
 void	jemmo_RButtonDown(HWND hWnd, WPARAM wParam, LPARAM lParam);
 void	jemmo_PreviousImage();
 void	jemmo_NextImage();
+void	jemmo_ParseCommandLine();
+bool	jemmo_CheckSingleFile(const char *command_line);
+void	jemmo_GetDirectoryListing(char *dirname);
+void	jemmo_DrawImage(image *img);
+void	jemmo_Error(char *msg);
+int		jemmo_OpenImage(const char *filename);
 
 #endif //_INC_JEMMO_MAIN
