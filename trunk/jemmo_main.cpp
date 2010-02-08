@@ -29,13 +29,35 @@ HINSTANCE hInst;		// Program hInstance
 HBRUSH	bgBrush;
 HWND hwnd;
 
-LPWIN32_FIND_DATA lpFindFileData;
+WIN32_FIND_DATA lpFindFileData;
 __image_file_info *ifi_cur;
 __image_file_info *ifi_first;
 char * command_line;
 extern HWND hwnd;
 
-bool	jemmo_CheckSingleFile(const char *command_line)
+/* ‘ункци€ возвращает true, если path содержит им€ директории,
+   в противном случае функци€ возвращает false */
+
+bool	jemmo_IsDirectory(const char *path)
+{
+	WIN32_FIND_DATA lpF;
+	TCHAR fullpath[MAX_PATH];
+	HANDLE f;
+
+	GetFullPathName(path, MAX_PATH, fullpath, NULL); 
+
+	if ((f = FindFirstFile(fullpath, &lpF)) != INVALID_HANDLE_VALUE) 
+	{
+		if (lpF.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			FindClose(f);
+			return true;
+		}
+	}
+	FindClose(f);
+	return false;
+}
+
+bool	jemmo_PathExists(const char *command_line)
 {
 	TCHAR fullpath[MAX_PATH];
 
@@ -74,10 +96,14 @@ void	jemmo_ParseCommandLine()
 	/* ≈сли есть такой файл, то открываем его, в противном случае предполагаем,
 	   что в качестве параметра указана директори€, тогда нужно прочитать ее и
 	   составить список всех файлов */
-	if (jemmo_CheckSingleFile(command_line)) {
-		jemmo_OpenImage(command_line);
-	} else {
-		//jemmo_GetDirectoryListing(command_line);
+	if (jemmo_PathExists(command_line))
+	{
+		if (jemmo_IsDirectory(command_line))
+		{
+			jemmo_GetDirectoryListing(command_line);
+		} else {
+			jemmo_OpenImage(command_line);
+		}
 	}
 }
 
@@ -86,23 +112,25 @@ void	jemmo_ParseCommandLine()
 void	jemmo_GetDirectoryListing(char *dirname)
 {
 	HANDLE f;
-	f = FindFirstFile("*.JPG", lpFindFileData);
-	ifi_cur = (_image_file_info *) jemmo_malloc(sizeof(__image_file_info));
+	f = FindFirstFile("*.JPG", &lpFindFileData);
 	if (f != INVALID_HANDLE_VALUE)
 	{
 		do
 		{
-			strcpy(&ifi_cur->FileName, lpFindFileData->cFileName);
+			ifi_cur = (_image_file_info *) jemmo_malloc(sizeof(__image_file_info));
+			ifi_cur->prev = NULL; /* это перва€ запись */
+			strcpy(&ifi_cur->FileName, lpFindFileData.cFileName);
 			ifi_cur->source_format = frtJFIF;
+			ifi_cur->pImage = NULL;
 		}
-		while (FindNextFile(f, lpFindFileData) != 0);
+		while (FindNextFile(f, &lpFindFileData) != 0);
 		FindClose(f);
 	}
 }
 
 void	jemmo_NextImage()
 {
-	jemmo_ParseCommandLine();
+	
 }
 
 void	jemmo_PreviousImage()
@@ -160,7 +188,7 @@ int	jemmo_MainWindowRepaint()
 	HDC hdc;
 	PAINTSTRUCT ps;
 
-	if (current_image != NULL)
+	if (ifi_cur->pImage != NULL)
 	{
 		hdc = BeginPaint(hwnd, &ps);
 		GetClientRect(hwnd, &rect);
@@ -171,10 +199,10 @@ int	jemmo_MainWindowRepaint()
 		rLeft.left = 0;
 		rLeft.top = 0;
 		rLeft.bottom = rect.bottom;
-		rLeft.right = (rect.right/2 - current_image->width/2);
+		rLeft.right = (rect.right/2 - ifi_cur->pImage->width/2);
 		FillRect(hdc, &rLeft, bgBrush);
 
-		rRight.left = (rect.right/2 +current_image->width/2);
+		rRight.left = (rect.right/2 +ifi_cur->pImage->width/2);
 		rRight.top = 0;
 		rRight.bottom = rect.bottom;
 		rRight.right = rect.right;
@@ -182,12 +210,12 @@ int	jemmo_MainWindowRepaint()
 
 		rTop.left = 0;
 		rTop.top = 0;
-		rTop.bottom = (rect.bottom/2 - current_image->height/2);// + GetSystemMetrics(SM_CYCAPTION);
+		rTop.bottom = (rect.bottom/2 - ifi_cur->pImage->height/2);// + GetSystemMetrics(SM_CYCAPTION);
 		rTop.right = rect.right;
 		FillRect(hdc, &rTop, bgBrush);
 
 		rBottom.left = 0;
-		rBottom.top = (rect.bottom/2 + current_image->height/2);
+		rBottom.top = (rect.bottom/2 + ifi_cur->pImage->height/2);
 		rBottom.bottom = rect.bottom;
 		rBottom.right = rect.right;
 		FillRect(hdc, &rBottom, bgBrush);
@@ -208,6 +236,7 @@ int jemmo_AppInit()
 	CreateSimpleToolbar(hwnd);
 	CreateStatusBar();
 	SetScrollRange(hwnd, SB_VERT, 0, 100, TRUE);
+	SetScrollRange(hwnd, SB_HORZ, 0, 100, TRUE);
 	
 	bgBrush = CreateSolidBrush(0x0000);
 
@@ -277,6 +306,7 @@ void	jemmo_DrawImage(image *img)
 	HDC hDc; BITMAPINFOHEADER bmiHeader;
 	unsigned int left, top;
 	unsigned char *tmp;
+	/* первый раз hwnd почему-то равен 0, что приводит к отрисовке изображени€ на рабочем столе */
 	if (hwnd == 0) return;
 	if (img == NULL) {
 		return;
@@ -328,15 +358,16 @@ void	jemmo_Error(char *msg)
 int		jemmo_OpenImage(const char* filename)
 {
 	char str[MAX_PATH];
+	ifi_cur = (__image_file_info *) jemmo_malloc(sizeof(__image_file_info *));
 
-	current_image = jemmo_LoadImage(filename);
-	if (current_image == NULL) {
+	ifi_cur->pImage = jemmo_LoadImage(filename);
+	if (ifi_cur->pImage == NULL) {
 		jemmo_Error("Error loading image");
 	} else {
-		sprintf(str, "Image size: %d x %d, size: %d KB", current_image->width,
-				current_image->height, _msize(current_image->data)/1024);
+		sprintf(str, "Image size: %d x %d, size: %d KB", ifi_cur->pImage->width,
+				ifi_cur->pImage->height, _msize(ifi_cur->pImage->data)/1024);
 	
-	jemmo_DrawImage(current_image);
+	jemmo_DrawImage(ifi_cur->pImage);
 	jemmo_UpdateWindowSize(hwnd);
 	}
 

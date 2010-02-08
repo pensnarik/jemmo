@@ -158,8 +158,10 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 		}
 	case WM_PAINT:
 		{
+			extern __image_file_info *ifi_cur;
+
 			jemmo_MainWindowRepaint();
-			jemmo_DrawImage(current_image);
+			jemmo_DrawImage(ifi_cur->pImage);
 			UpdateWindow(hStatusBar);
 			return 0;
 		}
@@ -173,11 +175,17 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 			int tmp = GetScrollPos(hWnd, SB_VERT);
 			switch(LOWORD(wParam)) {
 			case SB_LINEUP:
+				{
 				tmp = max(0, tmp - 10);
+				}
+				break;
 			case SB_LINEDOWN:
+				{
 				tmp += 10;
+				}
+				break;
 			}
-			SetScrollPos(hWnd, SB_VERT, tmp, FALSE);
+			SetScrollPos(hWnd, SB_VERT, tmp, TRUE);
 			return 0;
 		}
 	case WM_COMMAND:
