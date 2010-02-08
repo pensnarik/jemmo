@@ -25,6 +25,11 @@
 #include "jemmo_jpeg.h"
 #include "jemmo_malloc.h"
 
+void	jemmo_FreeImage(image *jemmo_image)
+{
+	jemmo_mfree(jemmo_image);
+}
+
 __source_format jemmo_GetImageFormat(const char *FileName)
 {
 	// stub

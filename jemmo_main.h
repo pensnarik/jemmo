@@ -37,6 +37,7 @@ typedef struct _image_file_info {
 	char FileName;
 	int FileSize;
 	__source_format source_format;
+	image *pImage;
 	struct _image_file_info *prev;
 	struct _image_file_info *next;
 } __image_file_info;
@@ -51,6 +52,7 @@ void	jemmo_PreviousImage();
 void	jemmo_NextImage();
 void	jemmo_ParseCommandLine();
 bool	jemmo_CheckSingleFile(const char *command_line);
+bool	jemmo_IsDirectory(const char *path);
 void	jemmo_GetDirectoryListing(char *dirname);
 void	jemmo_DrawImage(image *img);
 void	jemmo_Error(char *msg);
