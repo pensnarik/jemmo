@@ -93,6 +93,7 @@ void	jemmo_ParseCommandLine()
 	if (command_line[0] == '\"') command_line++;
 	command_length = lstrlen(command_line);
 	if (command_line[command_length-1] == '\"') command_line[command_length-1] = 0;
+	if (command_line[command_length-1] == '\\') command_line[command_length-1] = 0;
 	/* ≈сли есть такой файл, то открываем его, в противном случае предполагаем,
 	   что в качестве параметра указана директори€, тогда нужно прочитать ее и
 	   составить список всех файлов */
@@ -112,7 +113,10 @@ void	jemmo_ParseCommandLine()
 void	jemmo_GetDirectoryListing(char *dirname)
 {
 	HANDLE f;
-	f = FindFirstFile("*.JPG", &lpFindFileData);
+	_image_file_info * prev = NULL;
+	char search_path[MAX_PATH];
+	wsprintf(search_path, "%s\\%s", dirname, "*.jpg");
+	f = FindFirstFile(search_path, &lpFindFileData);
 	if (f != INVALID_HANDLE_VALUE)
 	{
 		do
@@ -122,6 +126,16 @@ void	jemmo_GetDirectoryListing(char *dirname)
 			strcpy(&ifi_cur->FileName, lpFindFileData.cFileName);
 			ifi_cur->source_format = frtJFIF;
 			ifi_cur->pImage = NULL;
+			if (prev != NULL) 
+			{
+				ifi_cur->prev = prev;
+				ifi_cur->prev->next = ifi_cur;
+			} else
+			{
+				ifi_first = ifi_cur;
+				ifi_cur->prev = NULL;
+			}
+			prev = ifi_cur;
 		}
 		while (FindNextFile(f, &lpFindFileData) != 0);
 		FindClose(f);
@@ -355,20 +369,21 @@ void	jemmo_Error(char *msg)
 	MessageBox(hwnd, msg, "Error", MB_ICONERROR);
 }
 
-int		jemmo_OpenImage(const char* filename)
+int		jemmo_OpenImage(__image_file_info * jemmo_image)
 {
 	char str[MAX_PATH];
-	ifi_cur = (__image_file_info *) jemmo_malloc(sizeof(__image_file_info *));
+//	ifi_cur = (__image_file_info *) jemmo_malloc(sizeof(__image_file_info *));
 
-	ifi_cur->pImage = jemmo_LoadImage(filename);
-	if (ifi_cur->pImage == NULL) {
+	jemmo_image->pImage = jemmo_LoadImage(jemmo_image->FileName);
+	if (jemmo_image->pImage == NULL) {
 		jemmo_Error("Error loading image");
 	} else {
-		sprintf(str, "Image size: %d x %d, size: %d KB", ifi_cur->pImage->width,
-				ifi_cur->pImage->height, _msize(ifi_cur->pImage->data)/1024);
+		sprintf(str, "Image size: %d x %d, size: %d KB", jemmo_image->pImage->width,
+				jemmo_image->pImage->height, _msize(jemmo_image->pImage->data)/1024);
 	
-	jemmo_DrawImage(ifi_cur->pImage);
+	jemmo_DrawImage(jemmo_image->pImage);
 	jemmo_UpdateWindowSize(hwnd);
+	ifi_cur = jemmo_image;
 	}
 
 	return 0;
