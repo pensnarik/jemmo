@@ -34,7 +34,7 @@
    связанные списки */
 
 typedef struct _image_file_info {
-	char FileName;
+	char *FileName;
 	int FileSize;
 	__source_format source_format;
 	image *pImage;

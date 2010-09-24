@@ -123,7 +123,7 @@ void	jemmo_GetDirectoryListing(char *dirname)
 		{
 			ifi_cur = (_image_file_info *) jemmo_malloc(sizeof(__image_file_info));
 			ifi_cur->prev = NULL; /* это первая запись */
-			strcpy(&ifi_cur->FileName, lpFindFileData.cFileName);
+			strcpy(ifi_cur->FileName, lpFindFileData.cFileName);
 			ifi_cur->source_format = frtJFIF;
 			ifi_cur->pImage = NULL;
 			if (prev != NULL) 
