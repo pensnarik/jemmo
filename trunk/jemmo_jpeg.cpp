@@ -37,7 +37,8 @@ read_jpeg(const char *filename, unsigned int *width, unsigned int *height)
 	*width=0;
 	*height=0;
 
-	if ((infile = fopen(filename, "rb")) == NULL) {
+	if ((infile = fopen(filename, "rb")) == NULL) {\
+        MessageBox(NULL, buf, NULL, MB_OK | MB_ICONINFORMATION);
 		sprintf(buf, "JPEG :\nCan't open %s\n", filename);
 		MessageBox(NULL, buf, "msg", MB_ICONERROR);
 		return NULL;

@@ -30,6 +30,7 @@
 #include "jemmo_jpeg.h"
 #include "jemmo_image.h"
 #include "jemmo_main.h"
+#include "jemmo_malloc.h"
 
 BOOL RegClass(WNDPROC, LPCSTR, UINT);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -63,7 +64,7 @@ int WINAPI WinMain(HINSTANCE hInstance,
                      int       nCmdShow)
 {
 	MSG msg; 
-
+	__init_flag = 0;
 	if (!RegClass(WndProc, szClassName, COLOR_WINDOW)) return FALSE;
 	hwnd = CreateWindow(szClassName,
 						"Jemmo",
@@ -126,17 +127,19 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 		}
 	case WM_LBUTTONDOWN:
 		{
-			return 0;
+			//return 0;
 			char str[255];
-			current_image = jemmo_LoadImage("testimg.jpg");
-			if (current_image == NULL) {
+			ifi_cur = (_image_file_info *) jemmo_malloc(sizeof(__image_file_info));
+			ifi_cur->pImage = jemmo_LoadImage("c:\\mutex\\dev\\jemmo\\Debug\\testimg.jpg");
+			if (ifi_cur->pImage == NULL) {
 				MessageBox(NULL, "Error loading image", "Error", MB_ICONERROR);
 			} else {
-				sprintf(str, "Image size: %d x %d, size: %d KB", current_image->width,
-						current_image->height, _msize(current_image->data)/1024);
+				sprintf(str, "Image size: %d x %d, size: %d KB", ifi_cur->pImage->width,
+						ifi_cur->pImage->height, _msize(ifi_cur->pImage->data)/1024);
 			
 				//MessageBox(NULL, str, "Jemmo", MB_ICONINFORMATION);
-				jemmo_DrawImage(current_image);
+				__init_flag = 1;
+				jemmo_DrawImage(ifi_cur->pImage );
 				jemmo_UpdateWindowSize(hwnd);
 			}
 			return 0;
@@ -158,9 +161,9 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 		}
 	case WM_PAINT:
 		{
-			extern __image_file_info *ifi_cur;
-
+			//extern __image_file_info *ifi_cur;
 			jemmo_MainWindowRepaint();
+			if (ifi_cur == NULL) return 0;
 			jemmo_DrawImage(ifi_cur->pImage);
 			UpdateWindow(hStatusBar);
 			return 0;

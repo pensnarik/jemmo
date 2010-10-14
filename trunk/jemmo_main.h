@@ -56,6 +56,9 @@ bool	jemmo_IsDirectory(const char *path);
 void	jemmo_GetDirectoryListing(char *dirname);
 void	jemmo_DrawImage(image *img);
 void	jemmo_Error(char *msg);
-int		jemmo_OpenImage(const char *filename);
+int		jemmo_OpenImage(__image_file_info * jemmo_image);
+
+extern __image_file_info *ifi_cur;
+extern int __init_flag;
 
 #endif //_INC_JEMMO_MAIN

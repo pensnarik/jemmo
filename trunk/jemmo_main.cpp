@@ -24,13 +24,14 @@
 #include <shlwapi.h>
 
 image *current_image;
+__image_file_info *ifi_cur;
+int __init_flag;
 HWND hStatusBar;		// Status bar
 HINSTANCE hInst;		// Program hInstance
 HBRUSH	bgBrush;
 HWND hwnd;
 
 WIN32_FIND_DATA lpFindFileData;
-__image_file_info *ifi_cur;
 __image_file_info *ifi_first;
 char * command_line;
 extern HWND hwnd;
@@ -103,7 +104,7 @@ void	jemmo_ParseCommandLine()
 		{
 			jemmo_GetDirectoryListing(command_line);
 		} else {
-			jemmo_OpenImage(command_line);
+			/*jemmo_OpenImage(command_line);*/
 		}
 	}
 }
@@ -123,6 +124,7 @@ void	jemmo_GetDirectoryListing(char *dirname)
 		{
 			ifi_cur = (_image_file_info *) jemmo_malloc(sizeof(__image_file_info));
 			ifi_cur->prev = NULL; /* это первая запись */
+			ifi_cur->FileName = (char *) jemmo_malloc(strlen(lpFindFileData.cFileName));
 			strcpy(ifi_cur->FileName, lpFindFileData.cFileName);
 			ifi_cur->source_format = frtJFIF;
 			ifi_cur->pImage = NULL;
@@ -201,8 +203,15 @@ int	jemmo_MainWindowRepaint()
 	RECT rLeft, rBottom, rTop, rRight, rect /* main window rect */;
 	HDC hdc;
 	PAINTSTRUCT ps;
-
-	if (ifi_cur->pImage != NULL)
+	if (ifi_cur == NULL)
+	{
+		hdc = BeginPaint(hwnd, &ps);
+		GetClientRect(hwnd, &rect);
+		FillRect(hdc, &rect, bgBrush);
+		EndPaint(hwnd, &ps);
+		return 0;
+	}
+	if (ifi_cur->pImage != NULL && __init_flag != 0)
 	{
 		hdc = BeginPaint(hwnd, &ps);
 		GetClientRect(hwnd, &rect);
@@ -322,7 +331,7 @@ void	jemmo_DrawImage(image *img)
 	unsigned char *tmp;
 	/* первый раз hwnd почему-то равен 0, что приводит к отрисовке изображения на рабочем столе */
 	if (hwnd == 0) return;
-	if (img == NULL) {
+	if (img == NULL || __init_flag == 0) {
 		return;
 	} else {
 		hDc = GetDC(hwnd);
@@ -354,7 +363,9 @@ void	jemmo_DrawImage(image *img)
 			//	DIB_RGB_COLORS, SRCCOPY);
 			SetStretchBltMode(hDc, COLORONCOLOR);
 			SetBrushOrgEx(hDc, 0, 0, NULL);
-			StretchDIBits(hDc, left, top, img->width, img->height, 0, 0, img->width, img->height, tmp, (LPBITMAPINFO)&bmiHeader,
+//			StretchDIBits(hDc, left, top, img->width, img->height, 0, 0, img->width, img->height, tmp, (LPBITMAPINFO)&bmiHeader,
+//				DIB_RGB_COLORS, SRCCOPY);
+			StretchDIBits(hDc, 0, 0, 100, 100, 0, 0, 100, 100, tmp, (LPBITMAPINFO)&bmiHeader,
 				DIB_RGB_COLORS, SRCCOPY);
 
 			ReleaseDC(hwnd, hDc);
