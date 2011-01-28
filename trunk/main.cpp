@@ -130,7 +130,7 @@ LRESULT CALLBACK WndProc(HWND hWnd,
 			//return 0;
 			char str[255];
 			ifi_cur = (_image_file_info *) jemmo_malloc(sizeof(__image_file_info));
-			ifi_cur->pImage = jemmo_LoadImage("c:\\mutex\\dev\\jemmo\\Debug\\testimg.jpg");
+			ifi_cur->pImage = jemmo_LoadImage("c:\\mutex\\dev\\projects\\jemmo\\Debug\\testimg.jpg");
 			if (ifi_cur->pImage == NULL) {
 				MessageBox(NULL, "Error loading image", "Error", MB_ICONERROR);
 			} else {
